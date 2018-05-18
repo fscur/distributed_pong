@@ -16,18 +16,6 @@
 *.gch
 *.pch
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
 # Executables
 *.exe
 *.out
@@ -50,3 +38,12 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+bin/lib_input.so
+bin/lib_ui.so
+bin/lib_window.so
+bin/lib_game.so
+bin/tmp_lib_game.so
+bin/distributed_pong
+bin/imgui.ini
+bin/image.bmp
