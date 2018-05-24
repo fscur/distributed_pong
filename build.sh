@@ -19,6 +19,12 @@ gcc $compiler_flags -o $bin_dir/lib_ui.so $src_dir/linux/ui.c -shared -fPIC \
 -l:cimgui.so -lGL \
 `pkg-config --cflags glfw3` `pkg-config --static --libs glfw3`
 
+gcc $compiler_flags -o $bin_dir/lib_rendering.so $src_dir/linux/rendering.c -shared -fPIC \
+-I$inc_dir -I$inc_dir/gl3w \
+-L$lib_dir -L$bin_dir \
+-lGL \
+`pkg-config --cflags glfw3` `pkg-config --static --libs glfw3`
+
 gcc $compiler_flags -o $bin_dir/lib_input.so $src_dir/linux/input.c -shared -fPIC \
 -I$inc_dir -I$inc_dir/gl3w \
 -L$lib_dir -L$bin_dir \
@@ -28,11 +34,12 @@ gcc $compiler_flags -o $bin_dir/lib_input.so $src_dir/linux/input.c -shared -fPI
 gcc $compiler_flags -o $bin_dir/lib_game.so $src_dir/game/game.c -shared -fPIC \
 -I$inc_dir \
 -L$lib_dir -L$bin_dir \
--l:lib_ui.so -l:lib_input.so
+-l:lib_ui.so -l:lib_input.so -l:lib_rendering.so
 
 rm -f distributed_pong
 gcc $compiler_flags -o distributed_pong $src_dir/linux/main.c -lm -ldl \
 -I$inc_dir \
 -L$lib_dir -L$bin_dir \
 -l:lib_window.so
-#./rays_and_chains
+
+./distributed_pong

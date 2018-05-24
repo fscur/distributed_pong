@@ -1,20 +1,8 @@
 #pragma once
-#define _GNU_SOURCE
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <sys/timeb.h>
-#include <time.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "../game/types.h"
-
-typedef struct timeb Timespan;
 
 void*
 load_lib(char* lib_name) {

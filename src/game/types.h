@@ -51,22 +51,12 @@ typedef struct Color {
   f32 a;
 } Color;
 
-typedef struct Player { f32 y; } Player;
-
-typedef struct Ball { v2 pos; } Ball;
-
-typedef struct World {
-  Player player_1;
-  Player player_2;
-  Ball ball;
-} World;
-
-typedef struct Game_State {
-  void* memory;
-  void* window;
-  void* ui;
-  void* input;
-  bool running;
-  f32 dt;
-  World* world;
-} Game_State;
+// typedef struct Game_State {
+//   void* memory;
+//   void* window;
+//   void* ui;
+//   void* input;
+//   bool running;
+//   f32 dt;
+//   World* world;
+// } Game_State;

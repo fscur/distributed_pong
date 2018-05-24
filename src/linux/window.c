@@ -57,9 +57,9 @@ void
 window_render(Game_Window* window) {
   glViewport(0, 0, window->width, window->height);
 
-  Color clear_color = window->back_color;
-  glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
-  glClear(GL_COLOR_BUFFER_BIT);
+  // Color clear_color = window->back_color;
+  // glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
+  // glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void

@@ -3,6 +3,24 @@
 #include <math.h>
 #include <stdbool.h>
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
+f32
+min(f32 a, f32 b) {
+  return a < b ? a : b;
+}
+
+f32
+max(f32 a, f32 b) {
+  return a > b ? a : b;
+}
+
 u32
 from_u8_to_32(u8 h1, u8 h0, u8 l1, u8 l0) {
   u32 result = (h1 << 24) | (h0 << 16) | (l1 << 8) | (l0 << 0);
@@ -23,6 +41,47 @@ dot2(v2 a, v2 b) {
 f32
 len2(v2 v) {
   return sqrt(dot2(v, v));
+}
+
+v2
+add2(v2 a, v2 b) {
+  return (v2){a.x + b.x, a.y + b.y};
+}
+
+v2
+sub2(v2 a, v2 b) {
+  return (v2){a.x - b.x, a.y - b.y};
+}
+
+v2
+min2(v2 a, v2 b) {
+  return (v2){min(a.x, b.x), min(a.y, b.y)};
+}
+
+v2
+max2(v2 a, v2 b) {
+  return (v2){max(a.x, b.x), max(a.y, b.y)};
+}
+
+v2
+mul2(v2 v, f32 s) {
+  return (v2){v.x * s, v.y * s};
+}
+
+v2
+div2(v2 v, f32 s) {
+  return (v2){v.x / s, v.y / s};
+}
+
+v2
+norm2(v2 v) {
+  return div2(v, len2(v));
+}
+
+v2
+reflect2(v2 incident_direction, v2 normal) {
+  return sub2(incident_direction,
+              mul2(normal, 2.0 * dot2(normal, incident_direction)));
 }
 
 v3

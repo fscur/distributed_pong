@@ -2,12 +2,15 @@
 #include "types.h"
 #include "bitmap.h"
 #include "window.h"
+#include "world.h"
 
 typedef struct Ui {
   Game_Window* window;
+  World* world;
   Bitmap* image;
   u32 texture_id;
   Color clear_color;
+  f32 time;
   f32 dt;
 } Ui;
 

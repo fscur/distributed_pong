@@ -22,22 +22,27 @@ update_gl_texture(u32 texID, Bitmap* image) {
 
 internal void
 render_debug(Ui* ui) {
-  ImGuiIO* io = igGetIO();
-  igText("average: %.3f ms/frame (%.1f FPS)",
-         1000.0f / io->Framerate,
-         io->Framerate);
+  igText("w: %d", ui->window->width);
+  igText("h: %d", ui->window->height);
+  igText("t: %.3f seconds", ui->time);
+  igText("   %.3f ms/frame", ui->dt * 1000.0f);
+  igText("   %.3f frames/s", 1.0f / ui->dt);
+}
 
-  igText("width: %d height: %d", ui->window->width, ui->window->height);
+internal void
+render_placar(Ui* ui) {
+  bool open = true;
+  igBegin("game", &open, ImGuiWindowFlags_NoTitleBar);
+  igText("%d X %d", ui->world->player_1.points, ui->world->player_2.points);
+  igEnd();
 }
 
 internal void
 render_imgui(Ui* ui) {
   ImGui_ImplGlfwGL3_NewFrame();
 
-  // bool open = true;
-  // igShowDemoWindow(&open);
-
   render_debug(ui);
+  render_placar(ui);
 
   igRender();
 }
@@ -51,7 +56,7 @@ init_imgui(Ui* ui) {
 
   struct ImGuiIO* io = igGetIO();
   ImFontAtlas_AddFontFromFileTTF(
-      io->Fonts, "../res/fonts/UbuntuMono-Regular.ttf", 16.0f, 0, 0);
+      io->Fonts, "../res/fonts/PressStart2P-Regular.ttf", 15.0f, 0, 0);
 }
 
 internal u32

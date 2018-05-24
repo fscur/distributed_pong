@@ -3,7 +3,8 @@ declare -a recomended_extensions=(
     "wayou.vscode-todo-highlight"
     "xaver.clang-format"
     "robertohuertasm.vscode-icons"
-    "kuscamara.electron")
+    "kuscamara.electron"
+    "slevesque.shader")
 
 for i in "${recomended_extensions[@]}"
 do

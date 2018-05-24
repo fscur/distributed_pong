@@ -7,6 +7,21 @@
 #include "input.h"
 #include "ui.h"
 #include "memory.h"
+#include "world.h"
+#include "rendering.h"
+
+typedef struct Game_State {
+  void* memory;
+  void* window;
+  void* ui;
+  void* input;
+  void* rendering;
+  bool running;
+  f32 time;
+  f32 dt;
+  World* world;
+  bool finished;
+} Game_State;
 
 typedef struct Game_Code {
   void* lib_handle;

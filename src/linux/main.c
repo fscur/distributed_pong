@@ -1,38 +1,16 @@
 #define _GNU_SOURCE
 #include <sys/mman.h>
+#include <errno.h>
 #include "lib_loader.c"
 #include "../game/game.h"
-
-long
-get_file_creation(char* file_name) {
-  struct stat st;
-  stat(file_name, &st);
-  return (long)st.st_ctime;
-}
-
-long
-milliseconds_elapsed(Timespan start, Timespan end) {
-  return (long)(1000.0 * (end.time - start.time) +
-                (end.millitm - start.millitm));
-}
-
-void
-spin(u32 milliseconds) {
-  Timespan start, end;
-  ftime(&start);
-  ftime(&end);
-  while (milliseconds_elapsed(start, end) < milliseconds) {
-    ftime(&end);
-  }
-}
+#include "time.c"
 
 #define GAME_LIB_NAME "lib_game.so"
 #define TMP_GAME_LIB_NAME "tmp_lib_game.so"
 
 void
 load_game_code(Game_Code* code) {
-  code->create =
-      (Game_State * (*)(Memory*)) fn(code->lib_handle, "game_create");
+  code->create = (Game_State * (*)(Memory*))fn(code->lib_handle, "game_create");
   code->init = (void (*)(Game_State*))fn(code->lib_handle, "game_init");
   code->load = (void (*)(Game_State*))fn(code->lib_handle, "game_load");
   code->input = (void (*)(Game_State*))fn(code->lib_handle, "game_input");
@@ -108,25 +86,50 @@ main(int argc, char** args) {
   i64 last_modified = 0;
   bool should_reload = false;
 
+  Time_Spec last;
+  Time_Spec current;
+  double elapsed_seconds_per_frame;
+
+  f32 monitor_hz = 60.0f;
+  f32 desired_fps = 60.0f;
+  f32 desired_seconds_per_frame = 1.0f / desired_fps;
+
+  clock_gettime(CLOCK_MONOTONIC, &last);
+
   while (state->running) {
-    if (should_reload) {
+    // #if _DEBUG
+    //     if (should_reload) {
 
-      game.unload(state);
-      spin(500);
-      reload_game(&game);
-      game.load(state);
+    //       game.unload(state);
+    //       spin(500);
+    //       reload_game(&game);
+    //       game.load(state);
 
-      should_reload = false;
-    }
+    //       should_reload = false;
+    //     }
 
-    if (get_file_creation(GAME_LIB_NAME) > last_modified) {
-      last_modified = get_file_creation(GAME_LIB_NAME);
-      should_reload = true;
-    }
+    //     if (get_file_creation(GAME_LIB_NAME) > last_modified) {
+    //       last_modified = get_file_creation(GAME_LIB_NAME);
+    //       should_reload = true;
+    //     }
+    // #endif
 
+    game.render(state);
     game.input(state);
     game.update(state);
-    game.render(state);
+
+    clock_gettime(CLOCK_MONOTONIC_RAW, &current);
+    elapsed_seconds_per_frame = to_seconds(&current) - to_seconds(&last);
+
+    while (elapsed_seconds_per_frame <= desired_seconds_per_frame) {
+      clock_gettime(CLOCK_MONOTONIC_RAW, &current);
+      elapsed_seconds_per_frame = to_seconds(&current) - to_seconds(&last);
+    }
+
+    last = current;
+
+    state->dt = elapsed_seconds_per_frame;
+    state->time += elapsed_seconds_per_frame;
   }
 
   // todo: (filipe)
