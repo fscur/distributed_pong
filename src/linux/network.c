@@ -163,14 +163,12 @@ network_connect_to_server(Network_State* state,
 
 void
 network_send_ready_message(Network_State* state) {
-  i32 server_socket = socket(AF_INET, SOCK_DGRAM, 0);
-
   for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
     Game_Client client = state->clients[i];
 
     char msg[6] = {};
     sprintf(msg, "READY");
-    sendto(server_socket,
+    sendto(state->server_socket,
            msg,
            strlen(msg),
            0,
@@ -191,10 +189,36 @@ network_receive_ready_message(Network_State* state) {
 }
 
 void
-network_send_input(Network_State* state) {}
+network_send_input(Network_State* state, i32 key) {
 
-void
-network_receive_input(Network_State* state) {}
+  Socket_Address_In server_address = {};
+  server_address.sin_family = AF_INET;
+  server_address.sin_addr.s_addr = inet_addr(state->connection.server_ip);
+  server_address.sin_port = htons(state->connection.server_port);
+
+  u32 nvalue = htonl(key);
+
+  sendto(state->client_socket,
+         &nvalue,
+         sizeof(u32),
+         0,
+         (Socket_Address*)&server_address,
+         sizeof(server_address));
+}
+
+i32
+network_receive_input(Network_State* state, Game_Client* client) {
+  u32 key = -1;
+
+  recvfrom(state->server_socket,
+           &key,
+           sizeof(u32),
+           0,
+           (Socket_Address*)&client->address,
+           client->address_size);
+
+  return ntohl(key);
+}
 
 void
 network_broadcast(Network_State* state) {

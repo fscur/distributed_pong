@@ -14,7 +14,6 @@ typedef struct sockaddr_in Socket_Address_In;
 
 #pragma pack(push, 1) // pack struct bits
 typedef struct Game_Input_Packet {
-  i32 player_index;
   i32 player_movement;
 } Game_Input_Packet;
 #pragma pack(pop)
@@ -60,8 +59,8 @@ bool network_connect_to_server(Network_State* state,
 void network_send_ready_message(Network_State* state);
 bool network_receive_ready_message(Network_State* state);
 
-void network_send_input(Network_State* state);
-void network_receive_input(Network_State* state);
+void network_send_input(Network_State* state, i32 key);
+i32 network_receive_input(Network_State* state, Game_Client* client);
 
 void network_broadcast(Network_State* state);
 void network_receive_data(Network_State* state);

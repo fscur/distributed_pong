@@ -12,48 +12,20 @@
 #define PLAYING_STAGE 3
 #define RETRY_STAGE 4
 
-internal void
-client_key_press(Client_State* state, i32 key) {
-  World* world = (World*)state->world;
-  Game_Window* window = (Game_Window*)state->window;
-
-  switch (key) {
-  case PLAYER1_UP:
-    if (world->player_1.y < window->height - world->player_height) {
-      world->player_1.velocity = MOVE_SPEED;
-      world->player_1.y += world->player_1.velocity;
-    }
-    break;
-  case PLAYER1_DOWN:
-    if (world->player_1.y > 0) {
-      world->player_1.velocity = -MOVE_SPEED;
-      world->player_1.y += world->player_1.velocity;
-    }
-    break;
-  case PLAYER2_UP:
-    if (world->player_2.y < window->height - world->player_height) {
-      world->player_2.velocity = MOVE_SPEED;
-      world->player_2.y += world->player_2.velocity;
-    }
-    break;
-  case PLAYER2_DOWN:
-    if (world->player_2.y > 0) {
-      world->player_2.velocity = -MOVE_SPEED;
-      world->player_2.y += world->player_2.velocity;
-    }
-    break;
-  }
-}
-
 void
 stage0_play(Client_State* state, char name[MAX_PLAYER_NAME_LENGTH]) {
   sprintf(&state->name, "%s", name);
-  state->stage = 1;
+  state->stage = SEARCHING_SERVER_STAGE;
 }
 
 void
 stage0_close(Client_State* state) {
   state->running = false;
+}
+
+internal void
+client_key_press(Client_State* state, i32 key) {
+  network_send_input(state->network, key);
 }
 
 Client_State*
@@ -160,12 +132,13 @@ client_run(Client_State* state) {
     break;
   }
   case PLAYING_STAGE: {
-    input_update(state->input);
     window_input(state->window);
+    input_update(state->input);
     network_receive_data(state->network);
     client_update(state);
     window_render(state->window);
     rendering_render(state->rendering);
+    ui_render(state->ui);
     window_swapbuffers(state->window);
     break;
   }
@@ -177,14 +150,6 @@ client_run(Client_State* state) {
     break;
   }
   }
-}
-
-void
-client_input(Client_State* state) {
-  if (state->stage == AWAITING_STAGE)
-    input_update(state->input);
-
-  window_input(state->window);
 }
 
 void

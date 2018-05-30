@@ -11,35 +11,35 @@
 #define RETRY_STAGE 2
 
 internal void
-key_press(Server_State* state, i32 key) {
-  // World* world = (World*)state->world;
+handle_input(Server_State* state, i32 key) {
+  World* world = (World*)state->world;
 
-  // switch (key) {
-  // case PLAYER1_UP:
-  //   if (world->player_1.y < window->height - world->player_height) {
-  //     world->player_1.velocity = MOVE_SPEED;
-  //     world->player_1.y += world->player_1.velocity;
-  //   }
-  //   break;
-  // case PLAYER1_DOWN:
-  //   if (world->player_1.y > 0) {
-  //     world->player_1.velocity = -MOVE_SPEED;
-  //     world->player_1.y += world->player_1.velocity;
-  //   }
-  //   break;
-  // case PLAYER2_UP:
-  //   if (world->player_2.y < window->height - world->player_height) {
-  //     world->player_2.velocity = MOVE_SPEED;
-  //     world->player_2.y += world->player_2.velocity;
-  //   }
-  //   break;
-  // case PLAYER2_DOWN:
-  //   if (world->player_2.y > 0) {
-  //     world->player_2.velocity = -MOVE_SPEED;
-  //     world->player_2.y += world->player_2.velocity;
-  //   }
-  //   break;
-  // }
+  switch (key) {
+  case PLAYER1_UP:
+    if (world->player_1.y < world->height - world->player_height) {
+      world->player_1.velocity = MOVE_SPEED;
+      world->player_1.y += world->player_1.velocity;
+    }
+    break;
+  case PLAYER1_DOWN:
+    if (world->player_1.y > 0) {
+      world->player_1.velocity = -MOVE_SPEED;
+      world->player_1.y += world->player_1.velocity;
+    }
+    break;
+  case PLAYER2_UP:
+    if (world->player_2.y < world->height - world->player_height) {
+      world->player_2.velocity = MOVE_SPEED;
+      world->player_2.y += world->player_2.velocity;
+    }
+    break;
+  case PLAYER2_DOWN:
+    if (world->player_2.y > 0) {
+      world->player_2.velocity = -MOVE_SPEED;
+      world->player_2.y += world->player_2.velocity;
+    }
+    break;
+  }
 }
 
 Server_State*
@@ -91,9 +91,16 @@ server_run(Server_State* state) {
     break;
   }
   case PLAYING_STAGE: {
-    network_receive_input(state->network);
+    Network_State* network = state->network;
+
+    for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+      Game_Client client = network->clients[i];
+      i32 key = network_receive_input(state->network, &client);
+      handle_input(state, key);
+    }
+
     server_update(state);
-    network_broadcast(state->network);
+    network_broadcast(network);
     break;
   }
   }

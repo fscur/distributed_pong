@@ -6,19 +6,19 @@ input_update(Input* input) {
   GLFWwindow* window = (GLFWwindow*)input->window->handle;
   void* state = glfwGetWindowUserPointer(window);
 
-  int action = glfwGetKey(window, GLFW_KEY_W);
-  if (action == GLFW_PRESS)
+  i32 player1_up = glfwGetKey(window, GLFW_KEY_W);
+  i32 player1_down = glfwGetKey(window, GLFW_KEY_S);
+  i32 player2_up = glfwGetKey(window, GLFW_KEY_UP);
+  i32 player2_down = glfwGetKey(window, GLFW_KEY_DOWN);
+
+  if (player1_up == GLFW_PRESS)
     input->key_press(state, PLAYER1_UP);
-
-  action = glfwGetKey(window, GLFW_KEY_S);
-  if (action == GLFW_PRESS)
+  else if (player1_down == GLFW_PRESS)
     input->key_press(state, PLAYER1_DOWN);
-
-  action = glfwGetKey(window, GLFW_KEY_UP);
-  if (action == GLFW_PRESS)
+  else if (player2_up == GLFW_PRESS)
     input->key_press(state, PLAYER2_UP);
-
-  action = glfwGetKey(window, GLFW_KEY_DOWN);
-  if (action == GLFW_PRESS)
+  else if (player2_down == GLFW_PRESS)
     input->key_press(state, PLAYER2_DOWN);
+  else
+    input->key_press(state, NO_INPUT);
 }
