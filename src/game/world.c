@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_POINTS 5
+#define MAX_POINTS 50
 
 // note: pixels/second
-#define BALL_START_SPEED 5.0f
+#define BALL_START_SPEED 1.0f
 
 void
 world_reset(World* world) {
@@ -75,8 +75,10 @@ world_update(World* world) {
   if (p1_collided) {
     if (!player_1->colliding) {
       v2 normal = get_collision_normal(p1_min, p1_max, ball->pos);
+
       ball->velocity = add2(reflect2(ball->velocity, normal),
                             (v2){0.0, player_1->velocity * 0.5f});
+
       player_1->colliding = true;
     }
   } else {

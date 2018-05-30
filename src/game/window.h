@@ -11,9 +11,7 @@ typedef struct Game_Window {
   bool should_close;
 } Game_Window;
 
-typedef struct Game_State Game_State;
-
-void window_create(Game_State* state, Game_Window* window);
+void window_create(void* state, Game_Window* window);
 void window_input(Game_Window* window);
 void window_update(Game_Window* window);
 void window_render(Game_Window* window);

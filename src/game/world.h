@@ -1,7 +1,10 @@
 #pragma once
 #include "types.h"
 
+#define MAX_PLAYER_NAME_LENGTH 8
+
 typedef struct Player {
+  // char name[MAX_PLAYER_NAME_LENGTH];
   f32 y;
   f32 velocity;
   i32 points;

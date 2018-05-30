@@ -3,7 +3,7 @@
 
 typedef struct Input {
   Game_Window* window;
-  void (*key_press)(Game_State* state, i32 key);
+  void (*key_press)(void* state, i32 key);
 } Input;
 
 #define PLAYER1_UP 0

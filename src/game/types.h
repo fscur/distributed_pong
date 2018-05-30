@@ -51,12 +51,5 @@ typedef struct Color {
   f32 a;
 } Color;
 
-// typedef struct Game_State {
-//   void* memory;
-//   void* window;
-//   void* ui;
-//   void* input;
-//   bool running;
-//   f32 dt;
-//   World* world;
-// } Game_State;
+#define MAX_PLAYER_COUNT 2
+#define MAX_PLAYER_NAME_LENGTH 8

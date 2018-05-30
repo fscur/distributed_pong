@@ -5,11 +5,52 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb) Game",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/distributed_pong",
             "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(gdb) Server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/pong_server",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(gdb) Client",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/pong_client",
+            "args": [
+                "127.0.0.1",
+                "60001"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/bin",
             "environment": [],

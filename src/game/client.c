@@ -1,4 +1,4 @@
-#include "game.h"
+#include "client.h"
 #include "memory.c"
 #include "bitmap.c"
 #include "world.c"
@@ -6,8 +6,14 @@
 // note: pixels/second
 #define MOVE_SPEED 10.0f
 
+#define START_STAGE 0
+#define SEARCHING_SERVER_STAGE 1
+#define AWAITING_STAGE 2
+#define PLAYING_STAGE 3
+#define RETRY_STAGE 4
+
 internal void
-key_press(Game_State* state, i32 key) {
+client_key_press(Client_State* state, i32 key) {
   World* world = (World*)state->world;
   Game_Window* window = (Game_Window*)state->window;
 
@@ -39,14 +45,25 @@ key_press(Game_State* state, i32 key) {
   }
 }
 
-Game_State*
-game_create(Memory* memory) {
-  assert(sizeof(Game_State) <= memory->permanent_size);
+void
+stage0_play(Client_State* state, char name[MAX_PLAYER_NAME_LENGTH]) {
+  sprintf(&state->name, "%s", name);
+  state->stage = 1;
+}
+
+void
+stage0_close(Client_State* state) {
+  state->running = false;
+}
+
+Client_State*
+client_create_state(Memory* memory) {
+  assert(sizeof(Client_State) <= memory->permanent_size);
 
   Memory_Arena arena = {};
   arena_init(&arena, memory->permanent_addr, memory->permanent_size);
 
-  Game_State* state = arena_push_struct(&arena, Game_State);
+  Client_State* state = arena_push_struct(&arena, Client_State);
   state->window = arena_push_struct(&arena, Game_Window);
   state->input = arena_push_struct(&arena, Input);
   state->ui = arena_push_struct(&arena, Ui);
@@ -57,8 +74,10 @@ game_create(Memory* memory) {
   state->running = true;
   state->finished = false;
   state->dt = 0.0;
+  state->stage = 0;
 
-  Color color = (Color){0.08f, 0.09f, 0.12f, 1.00f};
+  Color color = (Color){0.07f, 0.07f, 0.09f, 1.00f};
+  // Color color = (Color){0.08f, 0.09f, 0.12f, 1.00f};
 
   Game_Window* window = state->window;
   window->title = "pong";
@@ -68,11 +87,14 @@ game_create(Memory* memory) {
 
   Input* input = state->input;
   input->window = state->window;
-  input->key_press = key_press;
+  input->key_press = client_key_press;
 
   Ui* ui = state->ui;
+  ui->state = state;
   ui->window = state->window;
   ui->world = state->world;
+  ui->play = stage0_play;
+  ui->close = stage0_close;
 
   Network_State* network = state->network;
   network->world = state->world;
@@ -83,7 +105,7 @@ game_create(Memory* memory) {
 }
 
 void
-game_init(Game_State* state) {
+client_init(Client_State* state) {
   ui_init(state->ui);
 
   Game_Window* window = (Game_Window*)state->window;
@@ -97,54 +119,80 @@ game_init(Game_State* state) {
   render->uniform_buffer_data = state->world;
   render->uniform_buffer_data_size = sizeof(World);
   rendering_init(render);
+
+  Network_State* network = (Network_State*)state->network;
+  network_init_client(network);
 }
 
 void
-game_load(Game_State* state) {
+client_load(Client_State* state) {
   ui_load(state->ui);
-  // input_load(state->input);
 }
 
 void
-game_input(Game_State* state) {
-  input_update(state->input);
+client_run(Client_State* state) {
+  switch (state->stage) {
+  case START_STAGE: {
+    window_input(state->window);
+    window_render(state->window);
+    ui_render_start_screen(state->ui);
+    window_swapbuffers(state->window);
+    break;
+  }
+  case SEARCHING_SERVER_STAGE: {
+    window_input(state->window);
+    window_render(state->window);
+    ui_render_searching_server(state->ui);
+    window_swapbuffers(state->window);
+    if (network_connect_to_server(state->network, state->name))
+      state->stage = AWAITING_STAGE;
+    break;
+  }
+  case AWAITING_STAGE: {
+    window_input(state->window);
+    window_render(state->window);
+    ui_render_awaiting_challenger(state->ui);
+    window_swapbuffers(state->window);
+
+    if (network_receive_ready_message(state->network))
+      state->stage = PLAYING_STAGE;
+
+    break;
+  }
+  case PLAYING_STAGE: {
+    input_update(state->input);
+    window_input(state->window);
+    network_receive_data(state->network);
+    client_update(state);
+    window_render(state->window);
+    rendering_render(state->rendering);
+    window_swapbuffers(state->window);
+    break;
+  }
+  case RETRY_STAGE: {
+    window_input(state->window);
+    window_render(state->window);
+    ui_render_retry_screen(state->ui);
+    window_swapbuffers(state->window);
+    break;
+  }
+  }
+}
+
+void
+client_input(Client_State* state) {
+  if (state->stage == AWAITING_STAGE)
+    input_update(state->input);
+
   window_input(state->window);
 }
 
 void
-game_input_client(Game_State* state) {
-  window_input(state->window);
-}
-
-void
-game_update(Game_State* state) {
-  Game_Window* window = (Game_Window*)state->window;
-  World* world = (World*)state->world;
-  Ui* ui = (Ui*)state->ui;
-  ui->time = state->time;
-  ui->dt = state->dt;
-  world->time = state->time;
-  world->dt = state->dt;
-  world->height = window->height;
-  world->width = window->width;
-
-  if (world->player_1.points == MAX_POINTS ||
-      world->player_2.points == MAX_POINTS) {
-    state->running = false;
-    return;
-  } else
-    world_update(world);
-
-  state->running = !window->should_close;
-
-  window_update(state->window);
-}
-
-void
-game_update_client(Game_State* state) {
+client_update(Client_State* state) {
   Game_Window* window = (Game_Window*)state->window;
   World* world = (World*)state->world;
   Network_State* network = state->network;
+  Ui* ui = (Ui*)state->ui;
 
   world->ball.pos = network->current_packet.ball_pos;
   world->ball.radius = network->current_packet.ball_radius;
@@ -153,7 +201,6 @@ game_update_client(Game_State* state) {
   world->player_1.points = network->current_packet.players_points[0];
   world->player_2.points = network->current_packet.players_points[1];
 
-  Ui* ui = (Ui*)state->ui;
   ui->time = state->time;
   ui->dt = state->dt;
   world->time = state->time;
@@ -167,37 +214,11 @@ game_update_client(Game_State* state) {
 }
 
 void
-game_render(const Game_State* state) {
-  window_render(state->window);
-  rendering_render(state->rendering);
-  ui_render(state->ui);
-  window_swapbuffers(state->window);
-}
-
-void
-game_connect_to_server(const Game_State* state) {}
-
-void
-game_receive_data(const Game_State* state) {
-  network_receive_data(state->network);
-}
-
-void
-game_wait_players(const Game_State* state) {
-  network_accept_players(state->network);
-}
-
-void
-game_broadcast(const Game_State* state) {
-  network_broadcast(state->network);
-}
-
-void
-game_unload(const Game_State* state) {
+client_unload(const Client_State* state) {
   ui_unload(state->ui);
 }
 
 void
-game_destroy(const Game_State* state) {
+client_destroy(const Client_State* state) {
   window_destroy(state->window);
 }
