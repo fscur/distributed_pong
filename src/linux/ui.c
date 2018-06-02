@@ -20,33 +20,6 @@ update_gl_texture(u32 texID, Bitmap* image) {
                image->data);
 }
 
-internal void
-render_debug(Ui* ui) {
-  igText("w: %d", ui->window->width);
-  igText("h: %d", ui->window->height);
-  igText("t: %.3f seconds", ui->time);
-  igText("   %.3f ms/frame", ui->dt * 1000.0f);
-  igText("   %.3f frames/s", 1.0f / ui->dt);
-}
-
-internal void
-render_placar(Ui* ui) {
-  bool open = true;
-  igBegin("game", &open, ImGuiWindowFlags_NoTitleBar);
-  igText("%d X %d", ui->world->player_1.points, ui->world->player_2.points);
-  igEnd();
-}
-
-internal void
-render_imgui(Ui* ui) {
-  ImGui_ImplGlfwGL3_NewFrame();
-
-  render_debug(ui);
-  render_placar(ui);
-
-  igRender();
-}
-
 void
 set_style(struct ImGuiStyle* style, Ui* ui) {
   style->WindowPadding = (ImVec2){15, 15};
@@ -63,7 +36,7 @@ set_style(struct ImGuiStyle* style, Ui* ui) {
 
   style->Colors[ImGuiCol_Text] = (ImVec4){0.80f, 0.80f, 0.83f, 1.00f};
   style->Colors[ImGuiCol_TextDisabled] = (ImVec4){0.24f, 0.23f, 0.29f, 1.00f};
-  style->Colors[ImGuiCol_WindowBg] = (ImVec4){0.06f, 0.05f, 0.07f, 1.00f};
+  style->Colors[ImGuiCol_WindowBg] = (ImVec4){0.06f, 0.05f, 0.07f, 0.60f};
   style->Colors[ImGuiCol_ChildBg] = (ImVec4){0.07f, 0.05f, 0.07f, 1.00f};
   style->Colors[ImGuiCol_PopupBg] = (ImVec4){0.07f, 0.07f, 0.09f, 1.00f};
   style->Colors[ImGuiCol_Border] = (ImVec4){0.80f, 0.80f, 0.83f, 0.88f};
@@ -126,7 +99,6 @@ init_imgui(Ui* ui) {
 
   struct ImGuiStyle* style = igGetStyle();
   set_style(style, ui);
-  // igStyleColorsDark(style);
 }
 
 internal u32
@@ -157,11 +129,6 @@ ui_load(Ui* ui) {
 }
 
 void
-ui_render(Ui* ui) {
-  render_imgui(ui);
-}
-
-void
 ui_render_start_screen(Ui* ui) {
   ImGui_ImplGlfwGL3_NewFrame();
 
@@ -174,7 +141,7 @@ ui_render_start_screen(Ui* ui) {
   igPopStyleColor(1);
   igPushItemWidth(210);
   static char name[MAX_PLAYER_NAME_LENGTH] = {};
-  igInputText("", name, 20, 0, NULL, NULL);
+  igInputText("", name, MAX_PLAYER_NAME_LENGTH, 0, NULL, NULL);
   igPopItemWidth();
   sprintf(ui->name, "%s", name);
   if (igButton("Play", (ImVec2){100, 27})) {
@@ -225,7 +192,45 @@ ui_render_awaiting_challenger(Ui* ui) {
   igRender();
 }
 
-ui_render_retry_screen(Ui* ui) {
+internal void
+render_debug(Ui* ui) {
+  igText("w: %d", ui->window->width);
+  igText("h: %d", ui->window->height);
+  igText("t: %.3f seconds", ui->time);
+  igText("   %.3f ms/frame", ui->dt * 1000.0f);
+  igText("   %.3f frames/s", 1.0f / ui->dt);
+}
+
+internal void
+render_score(Ui* ui) {
+  bool open = true;
+  igBegin("score", &open, ImGuiWindowFlags_NoTitleBar);
+  igPushStyleColor(ImGuiCol_Text, (ImVec4){1.0, 0.0, 0.0, 1.0});
+  igText("%s", ui->world->player_1.name);
+  igPopStyleColor(1);
+  igSameLine(0, 4);
+  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igText("%d X %d", ui->world->player_1.points, ui->world->player_2.points);
+  igPopStyleColor(1);
+
+  igSameLine(0, 4);
+  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.0, 0.0, 1.0, 1.0});
+  igText("%s", ui->world->player_2.name);
+  igPopStyleColor(1);
+  igEnd();
+}
+
+void
+ui_render_game_ui(Ui* ui) {
+  ImGui_ImplGlfwGL3_NewFrame();
+
+  // render_debug(ui);
+  render_score(ui);
+
+  igRender();
+}
+
+ui_render_retry_screen(Ui* ui, char* result) {
   ImGui_ImplGlfwGL3_NewFrame();
 
   bool open = true;
@@ -233,7 +238,7 @@ ui_render_retry_screen(Ui* ui) {
           &open,
           ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
-  igText("%s, you %s!\nWant to play again?", ui->name, "lost");
+  igText("%s, you %s!\nWant to play again?", ui->name, result);
 
   igPopStyleColor(1);
 

@@ -23,8 +23,10 @@ typedef struct Client_State {
   f32 dt;
   bool connected;
   char name[MAX_PLAYER_NAME_LENGTH];
+  u32 id;
   World* world;
-  bool finished;
+  World_Rendering_Data* world_rendering_data;
+  bool match_result;
   i32 stage;
   Game_Client game_client;
 } Client_State;

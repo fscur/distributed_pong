@@ -1,12 +1,21 @@
 #include <gl3w/GL/gl3w.c>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
-
+#include "../game/client.h"
 #include "../game/window.h"
 
 static void
 error_callback(const int error, const char* description) {
   fprintf(stderr, "Error %d: %s\n", error, description);
+}
+
+void
+on_close(GLFWwindow* handle) {
+  glfwSetWindowShouldClose(handle, 0);
+
+  Client_State* state = glfwGetWindowUserPointer(handle);
+  Game_Window* window = state->window;
+  window->on_close(state);
 }
 
 void
@@ -29,6 +38,14 @@ window_create(void* state, Game_Window* window) {
   gl3wInit();
 
   glfwSetWindowUserPointer(window->handle, state);
+
+  GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
+  GLFWvidmode* video_mode = glfwGetVideoMode(primary_monitor);
+  glfwSetWindowPos(window->handle,
+                   (video_mode->width - window->width) / 2,
+                   (video_mode->height - window->height) / 2);
+
+  glfwSetWindowCloseCallback(window->handle, on_close);
 }
 
 void

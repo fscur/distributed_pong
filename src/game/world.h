@@ -1,10 +1,8 @@
 #pragma once
 #include "types.h"
 
-#define MAX_PLAYER_NAME_LENGTH 8
-
 typedef struct Player {
-  // char name[MAX_PLAYER_NAME_LENGTH];
+  char name[MAX_PLAYER_NAME_LENGTH];
   f32 y;
   f32 velocity;
   i32 points;
@@ -30,6 +28,23 @@ typedef struct World {
   Player player_2;
   Ball ball;
 } World;
+
+typedef struct World_Rendering_Data {
+  f32 width;
+  f32 height;
+  f32 player_width;
+  f32 player_height;
+
+  f32 time;
+  f32 dt;
+  v2 ball_position;
+
+  f32 ball_radius;
+  f32 player_1_y;
+  f32 player_2_y;
+  f32 pad1;
+
+} World_Rendering_Data;
 
 void world_init(World* world);
 void world_update(World* world);

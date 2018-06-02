@@ -3,9 +3,6 @@
 #include "bitmap.c"
 #include "world.c"
 
-// note: pixels/second
-#define MOVE_SPEED 10.0f
-
 #define START_STAGE 0
 #define SEARCHING_SERVER_STAGE 1
 #define AWAITING_STAGE 2
@@ -19,8 +16,9 @@ stage0_play(Client_State* state, char name[MAX_PLAYER_NAME_LENGTH]) {
 }
 
 void
-stage0_close(Client_State* state) {
+client_on_close(Client_State* state) {
   state->running = false;
+  // todo: send disconnected.
 }
 
 internal void
@@ -39,23 +37,24 @@ client_create_state(Memory* memory) {
   state->window = arena_push_struct(&arena, Game_Window);
   state->input = arena_push_struct(&arena, Input);
   state->ui = arena_push_struct(&arena, Ui);
-  state->world = arena_push_struct(&arena, World);
   state->rendering = arena_push_struct(&arena, Render_State);
   state->network = arena_push_struct(&arena, Network_State);
+  state->world = arena_push_struct(&arena, World);
+  state->world_rendering_data = arena_push_struct(&arena, World_Rendering_Data);
   state->memory = memory;
   state->running = true;
-  state->finished = false;
+  state->match_result = false;
   state->dt = 0.0;
-  state->stage = 0;
+  state->stage = START_STAGE;
 
   Color color = (Color){0.07f, 0.07f, 0.09f, 1.00f};
-  // Color color = (Color){0.08f, 0.09f, 0.12f, 1.00f};
 
   Game_Window* window = state->window;
   window->title = "pong";
   window->width = 1280;
   window->height = 720;
   window->back_color = color;
+  window->on_close = client_on_close;
 
   Input* input = state->input;
   input->window = state->window;
@@ -66,7 +65,7 @@ client_create_state(Memory* memory) {
   ui->window = state->window;
   ui->world = state->world;
   ui->play = stage0_play;
-  ui->close = stage0_close;
+  ui->close = client_on_close;
 
   Network_State* network = state->network;
   network->world = state->world;
@@ -88,8 +87,8 @@ client_init(Client_State* state) {
   world_init(world);
 
   Render_State* render = (Render_State*)state->rendering;
-  render->uniform_buffer_data = state->world;
-  render->uniform_buffer_data_size = sizeof(World);
+  render->uniform_buffer_data = state->world_rendering_data;
+  render->uniform_buffer_data_size = sizeof(World_Rendering_Data);
   rendering_init(render);
 
   Network_State* network = (Network_State*)state->network;
@@ -106,28 +105,44 @@ client_run(Client_State* state) {
   switch (state->stage) {
   case START_STAGE: {
     window_input(state->window);
+    window_update(state->window);
     window_render(state->window);
     ui_render_start_screen(state->ui);
     window_swapbuffers(state->window);
+    Game_Window* window = (Game_Window*)state->window;
+    state->running &= !window->should_close;
     break;
   }
   case SEARCHING_SERVER_STAGE: {
     window_input(state->window);
+    window_update(state->window);
+
     window_render(state->window);
     ui_render_searching_server(state->ui);
     window_swapbuffers(state->window);
-    if (network_connect_to_server(state->network, state->name))
+
+    if (network_connect_to_server(state->network, state->name, &state->id)) {
+      printf("%d\n", state->id);
       state->stage = AWAITING_STAGE;
+    }
+
+    Game_Window* window = (Game_Window*)state->window;
+    state->running &= !window->should_close;
     break;
   }
   case AWAITING_STAGE: {
     window_input(state->window);
+    window_update(state->window);
+
     window_render(state->window);
     ui_render_awaiting_challenger(state->ui);
     window_swapbuffers(state->window);
 
     if (network_receive_ready_message(state->network))
       state->stage = PLAYING_STAGE;
+
+    Game_Window* window = (Game_Window*)state->window;
+    state->running &= !window->should_close;
 
     break;
   }
@@ -136,17 +151,22 @@ client_run(Client_State* state) {
     input_update(state->input);
     network_receive_data(state->network);
     client_update(state);
+    window_update(state->window);
     window_render(state->window);
     rendering_render(state->rendering);
-    ui_render(state->ui);
+    ui_render_game_ui(state->ui);
     window_swapbuffers(state->window);
     break;
   }
   case RETRY_STAGE: {
+    world_init(state->world);
     window_input(state->window);
     window_render(state->window);
-    ui_render_retry_screen(state->ui);
+    ui_render_retry_screen(state->ui, state->match_result ? "won" : "lost");
     window_swapbuffers(state->window);
+
+    Game_Window* window = (Game_Window*)state->window;
+    state->running &= !window->should_close;
     break;
   }
   }
@@ -154,28 +174,51 @@ client_run(Client_State* state) {
 
 void
 client_update(Client_State* state) {
-  Game_Window* window = (Game_Window*)state->window;
   World* world = (World*)state->world;
   Network_State* network = state->network;
-  Ui* ui = (Ui*)state->ui;
 
-  world->ball.pos = network->current_packet.ball_pos;
-  world->ball.radius = network->current_packet.ball_radius;
-  world->player_1.y = network->current_packet.players_positions[0];
-  world->player_2.y = network->current_packet.players_positions[1];
   world->player_1.points = network->current_packet.players_points[0];
   world->player_2.points = network->current_packet.players_points[1];
 
+  if (world->player_1.points == MAX_POINTS ||
+      world->player_2.points == MAX_POINTS) {
+    state->stage = RETRY_STAGE;
+    state->match_result =
+        network->current_packet.players_points[state->id] == MAX_POINTS;
+    return;
+  }
+
+  Game_Window* window = (Game_Window*)state->window;
+
+  World_Rendering_Data* world_rendering_data =
+      (World_Rendering_Data*)state->world_rendering_data;
+
+  Ui* ui = (Ui*)state->ui;
+
+  sprintf(
+      &world->player_1.name, "%s", network->current_packet.players_names[0]);
+  sprintf(
+      &world->player_2.name, "%s", network->current_packet.players_names[1]);
+
+  world_rendering_data->width = (float)window->width;
+  world_rendering_data->height = (float)window->height;
+  world_rendering_data->player_width = (float)world->player_width;
+  world_rendering_data->player_height = (float)world->player_height;
+  world_rendering_data->time = state->time;
+  world_rendering_data->dt = state->dt;
+
+  world_rendering_data->player_1_y =
+      network->current_packet.players_positions[0];
+  world_rendering_data->player_2_y =
+      network->current_packet.players_positions[1];
+
+  world_rendering_data->ball_position = network->current_packet.ball_pos;
+  world_rendering_data->ball_radius = network->current_packet.ball_radius;
+
   ui->time = state->time;
   ui->dt = state->dt;
-  world->time = state->time;
-  world->dt = state->dt;
-  world->height = window->height;
-  world->width = window->width;
 
-  state->running = !window->should_close;
-
-  window_update(state->window);
+  state->running &= !window->should_close;
 }
 
 void

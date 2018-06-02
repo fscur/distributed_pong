@@ -13,9 +13,7 @@ typedef struct sockaddr Socket_Address;
 typedef struct sockaddr_in Socket_Address_In;
 
 #pragma pack(push, 1) // pack struct bits
-typedef struct Game_Input_Packet {
-  i32 player_movement;
-} Game_Input_Packet;
+typedef struct Game_Input_Packet { i32 player_movement; } Game_Input_Packet;
 #pragma pack(pop)
 
 #pragma pack(push, 1) // pack struct bits
@@ -24,11 +22,13 @@ typedef struct Game_Packet {
   f32 ball_radius;                         // 4
   f32 players_positions[MAX_PLAYER_COUNT]; // 32
   i8 players_points[MAX_PLAYER_COUNT];     // 8
+  char players_names[MAX_PLAYER_COUNT][MAX_PLAYER_NAME_LENGTH];
 } Game_Packet;
 #pragma pack(pop)
 
 typedef struct Game_Client {
   i32 id;
+  char name[MAX_PLAYER_NAME_LENGTH];
   Socket_Address_In address;
   u32 address_size;
 } Game_Client;
@@ -54,7 +54,11 @@ void network_init_client(Network_State* state);
 
 bool network_accept_players(Network_State* state);
 bool network_connect_to_server(Network_State* state,
-                               char name[MAX_PLAYER_NAME_LENGTH]);
+                               char name[MAX_PLAYER_NAME_LENGTH],
+                               u32* id);
+
+void network_send_game_over_message(Network_State* state, Game_Client* client);
+bool network_receive_game_over_message(Network_State* state);
 
 void network_send_ready_message(Network_State* state);
 bool network_receive_ready_message(Network_State* state);

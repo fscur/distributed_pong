@@ -96,54 +96,84 @@ network_init_server(Network_State* state) {
 bool
 network_accept_players(Network_State* state) {
 
+  char connect_cmd[8] = {};
   Socket_Address_In client_address;
   socklen_t client_address_size = sizeof(client_address);
-  char name[MAX_PLAYER_NAME_LENGTH];
+
   recvfrom(state->server_socket,
-           name,
-           MAX_PLAYER_NAME_LENGTH + 1,
+           connect_cmd,
+           8,
            0,
            (Socket_Address*)&client_address,
            &client_address_size);
 
-  for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
-    Game_Client client = state->clients[i];
-    if (client.address.sin_addr.s_addr == client_address.sin_addr.s_addr &&
-        client.address.sin_port == client_address.sin_port) {
-      return false;
+  if ((strcmp(connect_cmd, "CONNECT")) == 0) {
+    char name[MAX_PLAYER_NAME_LENGTH];
+    recvfrom(state->server_socket,
+             name,
+             MAX_PLAYER_NAME_LENGTH + 1,
+             0,
+             (Socket_Address*)&client_address,
+             &client_address_size);
+
+    for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
+      Game_Client client = state->clients[i];
+      if (client.address.sin_addr.s_addr == client_address.sin_addr.s_addr &&
+          client.address.sin_port == client_address.sin_port) {
+        return false;
+      }
     }
+
+    printf("%s connected.\n", name);
+    char msg[3] = {};
+    sprintf(msg, "OK");
+    sendto(state->server_socket,
+           msg,
+           strlen(msg),
+           0,
+           (Socket_Address*)&client_address,
+           sizeof(client_address));
+
+    u32 nvalue = htonl(state->connected_players);
+    sendto(state->server_socket,
+           &nvalue,
+           sizeof(i32),
+           0,
+           (Socket_Address*)&client_address,
+           sizeof(client_address));
+
+    state->clients[state->connected_players].id = state->connected_players;
+
+    sprintf(&state->clients[state->connected_players].name, "%s", name);
+
+    state->clients[state->connected_players].address = client_address;
+    state->clients[state->connected_players].address_size =
+        sizeof(client_address);
+
+    state->connected_players++;
+
+    return state->connected_players == MAX_PLAYER_COUNT;
   }
-
-  printf("%s connected.\n", name);
-
-  char msg[3] = {};
-  sprintf(msg, "OK");
-  sendto(state->server_socket,
-         msg,
-         strlen(msg),
-         0,
-         (Socket_Address*)&client_address,
-         sizeof(client_address));
-
-  state->clients[state->connected_players].id = state->connected_players;
-  state->clients[state->connected_players].address = client_address;
-  state->clients[state->connected_players].address_size =
-      sizeof(client_address);
-
-  state->connected_players++;
-
-  return state->connected_players == MAX_PLAYER_COUNT;
+  return false;
 }
 
 bool
 network_connect_to_server(Network_State* state,
-                          char name[MAX_PLAYER_NAME_LENGTH]) {
+                          char name[MAX_PLAYER_NAME_LENGTH],
+                          u32* id) {
 
   Socket_Address_In server_address = {};
   // bzero((char*)&server_address, sizeof(server_address));
   server_address.sin_family = AF_INET;
   server_address.sin_addr.s_addr = inet_addr(state->connection.server_ip);
   server_address.sin_port = htons(state->connection.server_port);
+
+  sendto(state->client_socket,
+         "CONNECT",
+         8,
+         0,
+         (Socket_Address*)&server_address,
+         sizeof(server_address));
 
   sendto(state->client_socket,
          name,
@@ -156,6 +186,29 @@ network_connect_to_server(Network_State* state,
   recvfrom(state->client_socket, msg, strlen(name), 0, NULL, NULL);
 
   if ((strcmp(msg, "OK")) == 0) {
+    struct timeval read_timeout;
+    read_timeout.tv_sec = 0;
+    read_timeout.tv_usec = 0;
+
+    setsockopt(state->client_socket,
+               SOL_SOCKET,
+               SO_RCVTIMEO,
+               &read_timeout,
+               sizeof(read_timeout));
+
+    u32 tmp_id;
+    recvfrom(state->client_socket, &tmp_id, sizeof(u32), 0, NULL, NULL);
+    *id = ntohl(tmp_id);
+
+    read_timeout.tv_sec = 0;
+    read_timeout.tv_usec = 10;
+
+    setsockopt(state->client_socket,
+               SOL_SOCKET,
+               SO_RCVTIMEO,
+               &read_timeout,
+               sizeof(read_timeout));
+
     return true;
   }
   return false;
@@ -170,7 +223,7 @@ network_send_ready_message(Network_State* state) {
     sprintf(msg, "READY");
     sendto(state->server_socket,
            msg,
-           strlen(msg),
+           6,
            0,
            (Socket_Address*)&client.address,
            client.address_size);
@@ -183,6 +236,33 @@ network_receive_ready_message(Network_State* state) {
   recvfrom(state->client_socket, msg, 6, 0, NULL, NULL);
 
   if ((strcmp(msg, "READY")) == 0) {
+    return true;
+  }
+  return false;
+}
+
+void
+network_send_game_over_message(Network_State* state, Game_Client* client) {
+  for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+    Game_Client client = state->clients[i];
+
+    char msg[9] = {};
+    sprintf(msg, "GAMEOVER");
+    sendto(state->server_socket,
+           msg,
+           9,
+           0,
+           (Socket_Address*)&client.address,
+           client.address_size);
+  }
+}
+
+bool
+network_receive_game_over_message(Network_State* state) {
+  char msg[9] = {};
+  recvfrom(state->client_socket, msg, 9, 0, NULL, NULL);
+
+  if ((strcmp(msg, "GAMEOVER")) == 0) {
     return true;
   }
   return false;
@@ -240,6 +320,9 @@ network_broadcast(Network_State* state) {
       continue;
 
     Game_Packet packet = {};
+
+    sprintf(&packet.players_names[0], "%s", world->player_1.name);
+    sprintf(&packet.players_names[1], "%s", world->player_2.name);
 
     for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
       packet.players_positions[i] = players_positions[i];

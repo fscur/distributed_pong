@@ -1,35 +1,34 @@
 #version 330 core
 
 struct World {
-  float time;
-  float dt;
   ivec2 res;
   ivec2 player_size;
-  float pad1;
-  float pad2;
+  float time;
+  float dt;
 };
 
 struct Player {
   float y;
-  float velocity;
-  float points;
-  bool colliding;
 };
 
 struct Ball {
   vec2 position;
-  vec2 velocity;
   float radius;
   float pad1;
-  float pad2;
-  float pad3;
 };
 
 layout(std140) uniform Game {
-  World world;
-  Player player1;
-  Player player2;
-  Ball ball;
+  vec2 res;
+  vec2 player_size;
+
+  float time;
+  float dt;
+  vec2 ball_position;
+
+  float ball_radius;
+  float player_1_y;
+  float player_2_y;
+  float pad1;
 };
 
 out vec4 frag_color;
@@ -79,25 +78,27 @@ over(vec4 a, vec4 b) {
 void
 main() {
 
-  vec2 res = vec2(float(world.res));
   float aspect = res.x / res.y;
   vec2 frag_pos = gl_FragCoord.xy / res;
   frag_pos.x *= aspect;
   frag_pos *= res.y;
   // frag_color = vec4(sin(world.time), sin(world.time), 1.0, 1.0);
 
-  float half_width = world.res.x * 0.5;
-  float half_height = world.res.y * 0.5;
-  vec2 p1_pos = vec2(0.0, float(player1.y));
-  vec2 p2_pos = vec2(world.res.x - world.player_size.x, float(player2.y));
-  float p1 = box(frag_pos, p1_pos, world.player_size);
-  float p2 = box(frag_pos, p2_pos, world.player_size);
+  float half_width = res.x * 0.5;
+  float half_height = res.y * 0.5;
+  vec2 p1_pos = vec2(0.0, player_1_y);
+  vec2 p2_pos = vec2(res.x - player_size.x, player_2_y);
+  float p1 = box(frag_pos, p1_pos, player_size);
+  float p2 = box(frag_pos, p2_pos, player_size);
 
-  float b = sphere(frag_pos, ball.position, ball.radius);
+  float b = sphere(frag_pos, ball_position, ball_radius);
   float l = dotted_vertical_line(frag_pos, half_width, 2.0);
 
-  vec4 world = vec4(l);
+  vec4 ball_color = vec4(0, b, 0, b);
+
+  vec4 world = vec4(0.07, 0.07, 0.09, 1.00);
+  world = over(vec4(l), world);
   world = over(vec4(p1, 0.0, p2, max(p1, p2)), world);
-  world = over(vec4(0, b, 0, b), world);
+  world = over(ball_color, world);
   frag_color = world;
 }

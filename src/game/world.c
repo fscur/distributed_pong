@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_POINTS 50
+#define MAX_POINTS 3
 
 // note: pixels/second
-#define BALL_START_SPEED 1.0f
+#define BALL_START_SPEED 10.0f
 
 void
 world_reset(World* world) {
@@ -19,7 +19,9 @@ world_reset(World* world) {
   world->player_1.colliding = false;
   world->player_2.colliding = false;
 
-  f32 ball_velocity_x = (((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f);
+  f32 ball_velocity_x =
+      1.0 -
+      max(min((((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f), 0.2f), -0.2);
 
   // note: limit y direction, so we do not start too steep
   f32 ball_velocity_y =
@@ -33,6 +35,8 @@ world_reset(World* world) {
 
 void
 world_init(World* world) {
+  world->player_1.points = 0;
+  world->player_2.points = 0;
   srand(time(0));
   f32 players_y = (f32)world->height * 0.5f - (f32)world->player_width * 0.5f;
   world->player_1.y = players_y;

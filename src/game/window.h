@@ -9,6 +9,7 @@ typedef struct Game_Window {
   i32 height;
   Color back_color;
   bool should_close;
+  void (*on_close)(void* state);
 } Game_Window;
 
 void window_create(void* state, Game_Window* window);

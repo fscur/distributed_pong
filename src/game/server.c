@@ -85,7 +85,11 @@ server_run(Server_State* state) {
   switch (state->stage) {
   case AWAITING_STAGE: {
     if (network_accept_players(state->network)) {
+      Network_State* network = state->network;
+      World* world = state->world;
       state->stage = PLAYING_STAGE;
+      sprintf(&world->player_1.name, "%s", network->clients[0].name);
+      sprintf(&world->player_2.name, "%s", network->clients[1].name);
       network_send_ready_message(state->network);
     }
     break;
@@ -103,6 +107,20 @@ server_run(Server_State* state) {
     network_broadcast(network);
     break;
   }
+  case RETRY_STAGE: {
+    Network_State* network = state->network;
+
+    for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+      Game_Client* client = &network->clients[i];
+      client->address.sin_addr.s_addr = 0;
+      client->address.sin_port = 0;
+    }
+
+    network->connected_players = 0;
+    state->stage = AWAITING_STAGE;
+    world_init(state->world);
+    break;
+  }
   }
 }
 
@@ -113,10 +131,11 @@ server_update(Server_State* state) {
   world->time = state->time;
   world->dt = state->dt;
 
+  Network_State* network = state->network;
+
   if (world->player_1.points == MAX_POINTS ||
       world->player_2.points == MAX_POINTS) {
     state->stage = RETRY_STAGE;
-    return;
   } else
     world_update(world);
 }
