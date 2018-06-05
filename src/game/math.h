@@ -75,7 +75,11 @@ div2(v2 v, f32 s) {
 
 v2
 norm2(v2 v) {
-  return div2(v, len2(v));
+  f32 l = len2(v);
+  if (l == 0) {
+    printf("eroooo");
+  }
+  return div2(v, l);
 }
 
 v2

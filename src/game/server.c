@@ -6,40 +6,68 @@
 // note: pixels/second
 #define MOVE_SPEED 10.0f
 
+#define UNINITIALIZED_STAGE -1
 #define AWAITING_STAGE 0
 #define PLAYING_STAGE 1
 #define RETRY_STAGE 2
 
 internal void
-handle_input(Server_State* state, i32 key) {
+handle_input(Server_State* state, Player* player, i32 key) {
   World* world = (World*)state->world;
 
   switch (key) {
-  case PLAYER1_UP:
-    if (world->player_1.y < world->height - world->player_height) {
-      world->player_1.velocity = MOVE_SPEED;
-      world->player_1.y += world->player_1.velocity;
+  case PLAYER_UP:
+    if (player->y < world->height - world->player_height) {
+      player->velocity = MOVE_SPEED;
+      player->y += player->velocity;
     }
     break;
-  case PLAYER1_DOWN:
-    if (world->player_1.y > 0) {
-      world->player_1.velocity = -MOVE_SPEED;
-      world->player_1.y += world->player_1.velocity;
+  case PLAYER_DOWN:
+    if (player->y > 0) {
+      player->velocity = -MOVE_SPEED;
+      player->y += player->velocity;
     }
     break;
-  case PLAYER2_UP:
-    if (world->player_2.y < world->height - world->player_height) {
-      world->player_2.velocity = MOVE_SPEED;
-      world->player_2.y += world->player_2.velocity;
-    }
-    break;
-  case PLAYER2_DOWN:
-    if (world->player_2.y > 0) {
-      world->player_2.velocity = -MOVE_SPEED;
-      world->player_2.y += world->player_2.velocity;
-    }
+    // case PLAYER2_UP:
+    //   if (world->player_2.y < world->height - world->player_height) {
+    //     world->player_2.velocity = MOVE_SPEED;
+    //     world->player_2.y += world->player_2.velocity;
+    //   }
+    //   break;
+    // case PLAYER2_DOWN:
+    //   if (world->player_2.y > 0) {
+    //     world->player_2.velocity = -MOVE_SPEED;
+    //     world->player_2.y += world->player_2.velocity;
+    //   }
     break;
   }
+}
+
+internal void
+change_stage(Server_State* state, i32 stage) {
+
+  switch (stage) {
+  case AWAITING_STAGE:
+    printf("Awaiting players...\n");
+    break;
+  case PLAYING_STAGE:
+    printf("Match started!\n");
+    break;
+  case RETRY_STAGE:
+    printf("Match over!\n");
+    break;
+  }
+  state->stage = stage;
+}
+
+internal void
+on_goal(World* world, Player* player) {
+  printf("%s scored!\n", player->name);
+  printf("%s %d X %d %s\n",
+         world->players[0].name,
+         world->players[0].points,
+         world->players[1].points,
+         world->players[1].name);
 }
 
 Server_State*
@@ -56,11 +84,13 @@ server_create(Memory* memory) {
   state->running = true;
   state->finished = false;
   state->dt = 0.0;
-  state->stage = AWAITING_STAGE;
+
+  state->stage = UNINITIALIZED_STAGE;
 
   World* world = (World*)state->world;
   world->width = 1280;
   world->height = 720;
+  world->on_goal = on_goal;
 
   Network_State* network = state->network;
   network->world = state->world;
@@ -74,74 +104,69 @@ server_create(Memory* memory) {
 void
 server_init(Server_State* state) {
   network_init_server(state->network);
-  world_init(state->world);
+  change_stage(state, AWAITING_STAGE);
 }
 
 void
-server_load(Server_State* state) {}
-
-void
 server_run(Server_State* state) {
+  Network_State* network = state->network;
+  World* world = state->world;
+
   switch (state->stage) {
   case AWAITING_STAGE: {
     if (network_accept_players(state->network)) {
-      Network_State* network = state->network;
-      World* world = state->world;
-      state->stage = PLAYING_STAGE;
-      sprintf(&world->player_1.name, "%s", network->clients[0].name);
-      sprintf(&world->player_2.name, "%s", network->clients[1].name);
+      world_init(state->world);
+      change_stage(state, PLAYING_STAGE);
+      memcpy(world->players[0].name,
+             network->clients[0].name,
+             MAX_PLAYER_NAME_LENGTH);
+
+      memcpy(world->players[1].name,
+             network->clients[1].name,
+             MAX_PLAYER_NAME_LENGTH);
+
       network_send_ready_message(state->network);
     }
     break;
   }
   case PLAYING_STAGE: {
-    Network_State* network = state->network;
+    if (world->players[0].points == MAX_POINTS ||
+        world->players[1].points == MAX_POINTS) {
+      change_stage(state, RETRY_STAGE);
+    } else {
+      for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+        Game_Client client = network->clients[i];
+        i32 key = network_receive_input(state->network, &client);
+        handle_input(state, &world->players[i], key);
+      }
 
-    for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
-      Game_Client client = network->clients[i];
-      i32 key = network_receive_input(state->network, &client);
-      handle_input(state, key);
+      world->time = state->time;
+      world->dt = state->dt;
+      world_update(world);
+      network_broadcast(network);
     }
-
-    server_update(state);
-    network_broadcast(network);
     break;
   }
   case RETRY_STAGE: {
-    Network_State* network = state->network;
 
     for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
       Game_Client* client = &network->clients[i];
+      client->id = -1;
       client->address.sin_addr.s_addr = 0;
       client->address.sin_port = 0;
+      client->status = CLIENT_STATUS_DISCONNECTED;
     }
 
     network->connected_players = 0;
-    state->stage = AWAITING_STAGE;
-    world_init(state->world);
+    network_clear_input_buffer(network->server_socket);
+    change_stage(state, AWAITING_STAGE);
     break;
   }
   }
 }
 
 void
-server_update(Server_State* state) {
-
-  World* world = (World*)state->world;
-  world->time = state->time;
-  world->dt = state->dt;
-
-  Network_State* network = state->network;
-
-  if (world->player_1.points == MAX_POINTS ||
-      world->player_2.points == MAX_POINTS) {
-    state->stage = RETRY_STAGE;
-  } else
-    world_update(world);
+server_destroy(const Server_State* state) {
+  // Network_State* network = state->network;
+  // todo: close sockets
 }
-
-void
-server_unload(const Server_State* state) {}
-
-void
-server_destroy(const Server_State* state) {}

@@ -7,10 +7,8 @@ typedef struct Input {
 } Input;
 
 #define NO_INPUT 0
-#define PLAYER1_UP 1
-#define PLAYER1_DOWN 2
-#define PLAYER2_UP 4
-#define PLAYER2_DOWN 5
+#define PLAYER_UP 1
+#define PLAYER_DOWN 2
 
 void input_init(Input* input);
 void input_load(Input* input);

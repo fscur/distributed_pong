@@ -3,9 +3,13 @@
     "editor.tabSize": 2,
     "clang-format.executable": "clang-format",
     "files.associations": {
+        "*.h": "c",
         "cimgui.h": "c",
         "stdio.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "type_traits": "c",
+        "typeinfo": "c",
+        "cmath": "c"
     },
     "todohighlight.defaultStyle": {
         "backgroundColor": "rgba(0,0,0,.2)",

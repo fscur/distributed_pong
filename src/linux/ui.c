@@ -206,16 +206,16 @@ render_score(Ui* ui) {
   bool open = true;
   igBegin("score", &open, ImGuiWindowFlags_NoTitleBar);
   igPushStyleColor(ImGuiCol_Text, (ImVec4){1.0, 0.0, 0.0, 1.0});
-  igText("%s", ui->world->player_1.name);
+  igText("%s", ui->world->players[0].name);
   igPopStyleColor(1);
   igSameLine(0, 4);
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
-  igText("%d X %d", ui->world->player_1.points, ui->world->player_2.points);
+  igText("%d X %d", ui->world->players[0].points, ui->world->players[1].points);
   igPopStyleColor(1);
 
   igSameLine(0, 4);
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.0, 0.0, 1.0, 1.0});
-  igText("%s", ui->world->player_2.name);
+  igText("%s", ui->world->players[1].name);
   igPopStyleColor(1);
   igEnd();
 }
@@ -230,6 +230,7 @@ ui_render_game_ui(Ui* ui) {
   igRender();
 }
 
+void
 ui_render_retry_screen(Ui* ui, char* result) {
   ImGui_ImplGlfwGL3_NewFrame();
 

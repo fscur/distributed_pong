@@ -40,7 +40,7 @@ window_create(void* state, Game_Window* window) {
   glfwSetWindowUserPointer(window->handle, state);
 
   GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
-  GLFWvidmode* video_mode = glfwGetVideoMode(primary_monitor);
+  const GLFWvidmode* video_mode = glfwGetVideoMode(primary_monitor);
   glfwSetWindowPos(window->handle,
                    (video_mode->width - window->width) / 2,
                    (video_mode->height - window->height) / 2);

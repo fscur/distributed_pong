@@ -3,7 +3,7 @@ inc_dir=../inc
 lib_dir=../lib
 bin_dir=../bin
 src_dir=../src
-compiler_flags="-std=c99 -ggdb -Wl,-rpath=$lib_dir -Wl,-rpath=$bin_dir -Wall -Wformat -D_DEBUG=1"
+compiler_flags="-std=c99 -ggdb -Wl,-rpath=$lib_dir -Wl,-rpath=$bin_dir -Wall -Wformat -D_DEBUG=1 -Wno-unused-function"
 mkdir bin -p
 cd bin
 

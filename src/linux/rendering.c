@@ -20,7 +20,9 @@ load_shader(const char* file_name, u32 type) {
 
   // Compile Vertex Shader
   printf("Compiling shader : %s\n", file_name);
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
   glShaderSource(id, 1, &code, NULL);
+#pragma GCC diagnostic pop
   glCompileShader(id);
 
   // Check Vertex Shader
@@ -29,7 +31,9 @@ load_shader(const char* file_name, u32 type) {
 
   if (info_log_length > 0) {
     char error_msg[info_log_length + 1];
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
     glGetShaderInfoLog(id, info_log_length, NULL, &error_msg);
+#pragma GCC diagnostic pop
     printf("%s\n", error_msg);
   }
 
@@ -53,7 +57,9 @@ load_program(Shader_Program* program) {
 
   if (info_log_length > 0) {
     char error_msg[info_log_length + 1];
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
     glGetProgramInfoLog(id, info_log_length, NULL, &error_msg);
+#pragma GCC diagnostic pop
     printf("%s\n", error_msg);
   }
 

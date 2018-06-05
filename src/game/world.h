@@ -1,6 +1,11 @@
 #pragma once
 #include "types.h"
 
+#define MAX_POINTS 20
+
+// note: pixels/second
+#define BALL_START_SPEED 10.0f
+
 typedef struct Player {
   char name[MAX_PLAYER_NAME_LENGTH];
   f32 y;
@@ -24,9 +29,9 @@ typedef struct World {
   i32 player_height;
   f32 pad0;
   f32 pad1;
-  Player player_1;
-  Player player_2;
+  Player players[MAX_PLAYER_COUNT];
   Ball ball;
+  void (*on_goal)(void* world, Player* player);
 } World;
 
 typedef struct World_Rendering_Data {
@@ -48,4 +53,3 @@ typedef struct World_Rendering_Data {
 
 void world_init(World* world);
 void world_update(World* world);
-void world_render(World* world);

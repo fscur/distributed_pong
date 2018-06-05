@@ -4,26 +4,22 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_POINTS 3
-
-// note: pixels/second
-#define BALL_START_SPEED 10.0f
-
 void
 world_reset(World* world) {
   world->player_width = 20;
   world->player_height = 80;
 
-  world->player_1.velocity = 0;
-  world->player_2.velocity = 0;
-  world->player_1.colliding = false;
-  world->player_2.colliding = false;
+  world->players[0].velocity = 0;
+  world->players[1].velocity = 0;
+  world->players[0].colliding = false;
+  world->players[1].colliding = false;
+
+  // note: limit x,y direction, so we do not start too steep
 
   f32 ball_velocity_x =
       1.0 -
       max(min((((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f), 0.2f), -0.2);
 
-  // note: limit y direction, so we do not start too steep
   f32 ball_velocity_y =
       max(min((((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f), 0.3f), -0.3);
 
@@ -35,12 +31,14 @@ world_reset(World* world) {
 
 void
 world_init(World* world) {
-  world->player_1.points = 0;
-  world->player_2.points = 0;
   srand(time(0));
   f32 players_y = (f32)world->height * 0.5f - (f32)world->player_width * 0.5f;
-  world->player_1.y = players_y;
-  world->player_2.y = players_y;
+
+  world->players[0].points = 0;
+  world->players[1].points = 0;
+  world->players[0].y = players_y;
+  world->players[1].y = players_y;
+
   world_reset(world);
 }
 
@@ -56,21 +54,42 @@ v2
 get_collision_normal(v2 aabb_min, v2 aabb_max, v2 ball_center) {
   v2 closest_point_in_aabb = min2(max2(ball_center, aabb_min), aabb_max);
   v2 dir = sub2(ball_center, closest_point_in_aabb);
+
+  if (dir.x == 0 && dir.y == 0) {
+    f32 minDist = 10000.0;
+    if (fabs(ball_center.x - aabb_max.x) < minDist) {
+      minDist = fabs(ball_center.x - aabb_max.x);
+      dir = (v2){1.0, 0.0};
+    }
+    if (fabs(ball_center.x - aabb_min.x) < minDist) {
+      minDist = fabs(ball_center.x - aabb_min.x);
+      dir = (v2){-1.0, 0.0};
+    }
+    if (fabs(ball_center.y - aabb_max.y) < minDist) {
+      minDist = fabs(ball_center.y - aabb_max.y);
+      dir = (v2){0.0, 1.0};
+    }
+    if (fabs(ball_center.y - aabb_min.y) < minDist) {
+      minDist = fabs(ball_center.y - aabb_min.y);
+      dir = (v2){0.0, -1.0};
+    }
+  }
+
   return norm2(dir);
 }
 
 void
 world_update(World* world) {
   Ball* ball = &world->ball;
-  Player* player_1 = &world->player_1;
-  Player* player_2 = &world->player_2;
+  Player* player_1 = &world->players[0];
+  Player* player_2 = &world->players[1];
 
   f32 ball_half_radius = ball->radius * 0.5;
   v2 player_size = (v2){world->player_width, world->player_height};
 
-  v2 p1_min = (v2){0.0f, world->player_1.y};
+  v2 p1_min = (v2){0.0f, player_1->y};
   v2 p1_max = add2(p1_min, player_size);
-  v2 p2_min = (v2){world->width - world->player_width, world->player_2.y};
+  v2 p2_min = (v2){world->width - world->player_width, player_2->y};
   v2 p2_max = add2(p2_min, player_size);
 
   bool p1_collided = collided(p1_min, p1_max, ball->pos, ball->radius);
@@ -110,10 +129,12 @@ world_update(World* world) {
   }
 
   if (ball->pos.x < 0) {
-    world->player_2.points++;
+    player_2->points++;
+    world->on_goal(world, player_2);
     world_reset(world);
   } else if (ball->pos.x > world->width) {
-    world->player_1.points++;
+    player_1->points++;
+    world->on_goal(world, player_1);
     world_reset(world);
   } else
     ball->pos = add2(ball->pos, ball->velocity);
@@ -121,6 +142,3 @@ world_update(World* world) {
   player_1->velocity = 0;
   player_2->velocity = 0;
 }
-
-void
-world_render(World* world) {}

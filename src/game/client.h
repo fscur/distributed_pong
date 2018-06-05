@@ -34,12 +34,5 @@ typedef struct Client_State {
 Client_State* client_create_state(Memory* memory);
 
 void client_init(Client_State* state);
-void client_load(Client_State* state);
-
 void client_run(Client_State* state);
-
-void client_input(Client_State* state);
-void client_update(Client_State* state);
-void client_render(const Client_State* state);
-void client_unload(const Client_State* state);
 void client_destroy(const Client_State* state);

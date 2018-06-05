@@ -12,8 +12,19 @@
 typedef struct sockaddr Socket_Address;
 typedef struct sockaddr_in Socket_Address_In;
 
+#define CMD_SIZE sizeof(u32)
+#define CMD_CONNECT 1
+#define CMD_WAIT 2
+#define CMD_NAME 3
+
+#define CLIENT_STATUS_DISCONNECTED 0
+#define CLIENT_STATUS_WAITING 1
+#define CLIENT_STATUS_CONNECTED 2
+
 #pragma pack(push, 1) // pack struct bits
-typedef struct Game_Input_Packet { i32 player_movement; } Game_Input_Packet;
+typedef struct Game_Input_Packet {
+  i32 player_movement;
+} Game_Input_Packet;
 #pragma pack(pop)
 
 #pragma pack(push, 1) // pack struct bits
@@ -31,6 +42,7 @@ typedef struct Game_Client {
   char name[MAX_PLAYER_NAME_LENGTH];
   Socket_Address_In address;
   u32 address_size;
+  u32 status;
 } Game_Client;
 
 typedef struct Network_Connection {
@@ -68,3 +80,5 @@ i32 network_receive_input(Network_State* state, Game_Client* client);
 
 void network_broadcast(Network_State* state);
 void network_receive_data(Network_State* state);
+
+void network_clear_input_buffer(i32 socket);

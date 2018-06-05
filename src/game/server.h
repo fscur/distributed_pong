@@ -31,9 +31,7 @@ Server_State* server_create(Memory* memory);
 // loaded/unloaded
 
 void server_init(Server_State* state);
-void server_load(Server_State* state);
 
 void server_run(Server_State* state);
 
-void server_unload(const Server_State* state);
 void server_destroy(const Server_State* state);
