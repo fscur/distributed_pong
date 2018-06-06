@@ -12,8 +12,15 @@
 #define RETRY_STAGE 4
 
 void
-stage0_play(Client_State* state, char name[MAX_PLAYER_NAME_LENGTH]) {
-  sprintf(state->name, "%s", name);
+stage0_play(Client_State* state,
+            char name[MAX_PLAYER_NAME_LENGTH],
+            char server_ip[SERVER_IP_LENGTH]) {
+
+  memcpy(state->name, name, MAX_PLAYER_NAME_LENGTH);
+
+  Network_State* network = (Network_State*)state->network;
+  memcpy(network->connection.server_ip, server_ip, SERVER_IP_LENGTH);
+
   state->stage = SEARCHING_SERVER_STAGE;
 }
 

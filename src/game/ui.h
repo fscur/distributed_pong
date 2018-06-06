@@ -12,7 +12,10 @@ typedef struct Ui {
   f32 time;
   f32 dt;
   char name[MAX_PLAYER_NAME_LENGTH];
-  void (*play)(void* state, char name[MAX_PLAYER_NAME_LENGTH]);
+  char server_ip[SERVER_IP_LENGTH];
+  void (*play)(void* state,
+               char name[MAX_PLAYER_NAME_LENGTH],
+               char server_ip[SERVER_IP_LENGTH]);
   void (*close)(void* state);
 } Ui;
 

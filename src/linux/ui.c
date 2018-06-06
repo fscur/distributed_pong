@@ -136,23 +136,44 @@ ui_render_start_screen(Ui* ui) {
   igBegin("start_screen",
           &open,
           ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+    igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igText("Enter the server ip:");
+  igPopStyleColor(1);
+
+  static char server_ip[SERVER_IP_LENGTH] = "127.0.0.1";
+  igPushItemWidth(210);
+  igPushIDInt(0);
+  igInputText("", server_ip, SERVER_IP_LENGTH, 0, NULL, NULL);
+  igPopID();
+  igPopItemWidth(1);
+
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
   igText("Enter your name:");
   igPopStyleColor(1);
-  igPushItemWidth(210);
+
   static char name[MAX_PLAYER_NAME_LENGTH] = {};
+  igPushItemWidth(210);
+  igPushIDInt(1);
   igInputText("", name, MAX_PLAYER_NAME_LENGTH, 0, NULL, NULL);
+  igPopID();
   igPopItemWidth();
-  sprintf(ui->name, "%s", name);
+
+  memcpy(ui->name, name, MAX_PLAYER_NAME_LENGTH);
+  memcpy(ui->server_ip, server_ip, SERVER_IP_LENGTH);
+
+  igPushIDInt(2);
   if (igButton("Play", (ImVec2){100, 27})) {
-    ui->play(ui->state, name);
+    ui->play(ui->state, name, server_ip);
   }
+  igPopID(0);
 
   igSameLine(0, 10);
-
+  igPushIDInt(3);
   if (igButton("Quit", (ImVec2){100, 27})) {
     ui->close(ui->state);
   }
+  igPopID();
   igEnd();
 
   igRender();
@@ -244,7 +265,7 @@ ui_render_retry_screen(Ui* ui, char* result) {
   igPopStyleColor(1);
 
   if (igButton("Play", (ImVec2){100, 27})) {
-    ui->play(ui->state, ui->name);
+    ui->play(ui->state, ui->name, ui->server_ip);
   }
 
   igSameLine(0, 10);
