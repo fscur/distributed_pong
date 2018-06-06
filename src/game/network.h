@@ -16,15 +16,15 @@ typedef struct sockaddr_in Socket_Address_In;
 #define CMD_CONNECT 1
 #define CMD_WAIT 2
 #define CMD_NAME 3
+#define CMD_READY 4
+#define CMD_GAMEOVER 5
 
 #define CLIENT_STATUS_DISCONNECTED 0
 #define CLIENT_STATUS_WAITING 1
 #define CLIENT_STATUS_CONNECTED 2
 
 #pragma pack(push, 1) // pack struct bits
-typedef struct Game_Input_Packet {
-  i32 player_movement;
-} Game_Input_Packet;
+typedef struct Game_Input_Packet { i32 player_movement; } Game_Input_Packet;
 #pragma pack(pop)
 
 #pragma pack(push, 1) // pack struct bits

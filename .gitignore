@@ -45,5 +45,4 @@ bin/lib_window.so
 bin/lib_game.so
 bin/tmp_lib_game.so
 bin/distributed_pong
-bin/imgui.ini
 bin/image.bmp

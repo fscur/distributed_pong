@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 
-#define MAX_POINTS 20
+#define MAX_POINTS 3
 
 // note: pixels/second
 #define BALL_START_SPEED 10.0f

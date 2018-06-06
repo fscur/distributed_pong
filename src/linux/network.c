@@ -210,7 +210,7 @@ network_accept_players(Network_State* state) {
     }
     }
   }
-  set_recvfrom_timeout(state->server_socket, 0, 0);
+  set_recvfrom_timeout(state->server_socket, 1, 0);
   return true;
 }
 
@@ -258,23 +258,19 @@ network_send_ready_message(Network_State* state) {
   for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
     Game_Client client = state->clients[i];
 
-    char msg[6] = {};
-    sprintf(msg, "READY");
-    sendto(state->server_socket,
-           msg,
-           6,
-           0,
-           (Socket_Address*)&client.address,
-           client.address_size);
+    send_cmd(state->server_socket,
+             CMD_READY,
+             (Socket_Address*)&client.address,
+             client.address_size);
   }
 }
 
 bool
 network_receive_ready_message(Network_State* state) {
-  char msg[6] = {};
-  recvfrom(state->client_socket, msg, 6, 0, NULL, NULL);
+  u32 cmd = read_cmd(state->client_socket, NULL, NULL);
 
-  if ((strcmp(msg, "READY")) == 0) {
+  if (cmd == CMD_READY) {
+    set_recvfrom_timeout(state->client_socket, 1, 0);
     return true;
   }
   return false;
@@ -285,23 +281,18 @@ network_send_game_over_message(Network_State* state, Game_Client* client) {
   for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
     Game_Client client = state->clients[i];
 
-    char msg[9] = {};
-    sprintf(msg, "GAMEOVER");
-    sendto(state->server_socket,
-           msg,
-           9,
-           0,
-           (Socket_Address*)&client.address,
-           client.address_size);
+    send_cmd(state->server_socket,
+             CMD_GAMEOVER,
+             (Socket_Address*)&client.address,
+             client.address_size);
   }
 }
 
 bool
 network_receive_game_over_message(Network_State* state) {
-  char msg[9] = {};
-  recvfrom(state->client_socket, msg, 9, 0, NULL, NULL);
+  u32 cmd = read_cmd(state->client_socket, NULL, NULL);
 
-  if ((strcmp(msg, "GAMEOVER")) == 0) {
+  if (cmd == CMD_GAMEOVER) {
     return true;
   }
   return false;
