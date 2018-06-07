@@ -26,4 +26,5 @@ void ui_render_start_screen(Ui* ui);
 void ui_render_searching_server(Ui* ui);
 void ui_render_awaiting_challenger(Ui* ui);
 void ui_render_retry_screen(Ui* ui, char* result);
+void ui_render_game_over_screen(Ui* ui);
 void ui_unload(Ui* ui);

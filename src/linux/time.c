@@ -3,6 +3,7 @@
 #include <sys/timeb.h>
 #include <time.h>
 #include "../game/types.h"
+#include "../game/time.h"
 
 typedef struct timeb Timespan;
 typedef struct timespec Time_Spec;
@@ -12,8 +13,8 @@ to_seconds(Time_Spec* ts) {
   return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
 }
 
-double
-seconds_elapsed() {
+f64
+time_now_seconds() {
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC_RAW, &now);
   return now.tv_sec + now.tv_nsec / 1000000000.0;

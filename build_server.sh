@@ -39,9 +39,7 @@ gcc $compiler_flags -o $bin_dir/lib_server.so $src_dir/game/server.c -shared -fP
 -l:lib_network.so
 
 rm -f distributed_pong
-gcc $compiler_flags -o pong_server $src_dir/linux/pong_server.c -lm -ldl \
+gcc $compiler_flags -o pongd $src_dir/linux/pong_server.c -lm -ldl \
 -I$inc_dir \
 -L$lib_dir -L$bin_dir \
 -l:lib_window.so -l:lib_server.so
-
-#./pong_server 60001

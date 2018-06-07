@@ -6,6 +6,9 @@ typedef struct ImVec2 ImVec2;
 typedef struct ImVec4 ImVec4;
 typedef struct ImGuiIO ImGuiIO;
 
+#define UI_BUTTON_WIDTH 100
+#define UI_BUTTON_HEIGHT 33
+
 internal void
 update_gl_texture(u32 texID, Bitmap* image) {
   glBindTexture(GL_TEXTURE_2D, texID);
@@ -90,7 +93,7 @@ set_style(struct ImGuiStyle* style, Ui* ui) {
   // ImFontAtlas_AddFontFromFileTTF(io->Fonts,
   // "../res/fonts/PressStart2P-Regular.ttf", 15.0f, 0, 0);
   ImFontAtlas_AddFontFromFileTTF(
-      io->Fonts, "../res/fonts/Ruda-Bold.ttf", 16.0f, 0, 0);
+      io->Fonts, "../res/fonts/Ruda-Bold.ttf", 20.0f, 0, 0);
 }
 
 internal void
@@ -135,9 +138,10 @@ ui_render_start_screen(Ui* ui) {
   bool open = true;
   igBegin("start_screen",
           &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+              ImGuiWindowFlags_NoMove);
 
-    igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
   igText("Enter the server ip:");
   igPopStyleColor(1);
 
@@ -163,14 +167,14 @@ ui_render_start_screen(Ui* ui) {
   memcpy(ui->server_ip, server_ip, SERVER_IP_LENGTH);
 
   igPushIDInt(2);
-  if (igButton("Play", (ImVec2){100, 27})) {
+  if (igButton("Play", (ImVec2){UI_BUTTON_WIDTH, UI_BUTTON_HEIGHT})) {
     ui->play(ui->state, name, server_ip);
   }
   igPopID(0);
 
   igSameLine(0, 10);
   igPushIDInt(3);
-  if (igButton("Quit", (ImVec2){100, 27})) {
+  if (igButton("Quit", (ImVec2){UI_BUTTON_WIDTH, UI_BUTTON_HEIGHT})) {
     ui->close(ui->state);
   }
   igPopID();
@@ -186,7 +190,8 @@ ui_render_searching_server(Ui* ui) {
   bool open = true;
   igBegin("searching_server",
           &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+              ImGuiWindowFlags_NoMove);
 
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
   igText("Searching server...");
@@ -203,7 +208,8 @@ ui_render_awaiting_challenger(Ui* ui) {
   bool open = true;
   igBegin("awaiting",
           &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+              ImGuiWindowFlags_NoMove);
 
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
   igText("Awaiting challenger...");
@@ -258,19 +264,48 @@ ui_render_retry_screen(Ui* ui, char* result) {
   bool open = true;
   igBegin("retry_screen",
           &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+              ImGuiWindowFlags_NoMove);
   igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
   igText("%s, you %s!\nWant to play again?", ui->name, result);
 
   igPopStyleColor(1);
 
-  if (igButton("Play", (ImVec2){100, 27})) {
+  if (igButton("Play", (ImVec2){UI_BUTTON_WIDTH, UI_BUTTON_HEIGHT})) {
     ui->play(ui->state, ui->name, ui->server_ip);
   }
 
   igSameLine(0, 10);
 
-  if (igButton("Quit", (ImVec2){100, 27})) {
+  if (igButton("Quit", (ImVec2){UI_BUTTON_WIDTH, UI_BUTTON_HEIGHT})) {
+    ui->close(ui->state);
+  }
+  igEnd();
+
+  igRender();
+}
+
+void
+ui_render_game_over_screen(Ui* ui) {
+  ImGui_ImplGlfwGL3_NewFrame();
+
+  bool open = true;
+  igBegin("game_over_screen",
+          &open,
+          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+              ImGuiWindowFlags_NoMove);
+  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igText("%s, your adversary quit!\nWant to play again?", ui->name);
+
+  igPopStyleColor(1);
+
+  if (igButton("Play", (ImVec2){UI_BUTTON_WIDTH, UI_BUTTON_HEIGHT})) {
+    ui->play(ui->state, ui->name, ui->server_ip);
+  }
+
+  igSameLine(0, 10);
+
+  if (igButton("Quit", (ImVec2){UI_BUTTON_WIDTH, UI_BUTTON_HEIGHT})) {
     ui->close(ui->state);
   }
   igEnd();

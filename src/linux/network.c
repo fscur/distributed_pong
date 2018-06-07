@@ -122,7 +122,14 @@ network_clear_input_buffer(i32 socket) {
 }
 
 bool
+same_address(Socket_Address_In* a, Socket_Address_In* b) {
+  return a->sin_addr.s_addr == b->sin_addr.s_addr && a->sin_port == b->sin_port;
+}
+
+bool
 network_accept_players(Network_State* state) {
+
+  Game_Client* current_client = NULL;
 
   while (state->connected_players < MAX_PLAYER_COUNT) {
 
@@ -135,37 +142,10 @@ network_accept_players(Network_State* state) {
                        (Socket_Address*)&client_address,
                        &client_address_size);
 
-    Game_Client* current_client = NULL;
-
-    for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
-      Game_Client client = state->clients[i];
-      if (client.status == CLIENT_STATUS_CONNECTED)
-        continue;
-
-      if (client_address.sin_addr.s_addr == 0 && client_address.sin_port == 0) {
-        current_client = &state->clients[i];
-        break;
-      } else if (client.address.sin_addr.s_addr == 0 &&
-                 client.address.sin_port == 0) {
-        current_client = &state->clients[state->connected_players];
-        current_client->id = state->connected_players;
-        current_client->address = client_address;
-        current_client->address_size = client_address_size;
-        break;
-      } else if (client.address.sin_addr.s_addr ==
-                     client_address.sin_addr.s_addr &&
-                 client.address.sin_port == client_address.sin_port) {
-        current_client = &state->clients[i];
-        break;
-      }
-    }
-
-    if (current_client == NULL || current_client->id == -1)
-      continue;
-
     switch (cmd) {
-    case 0: {
-      if (current_client->status == CLIENT_STATUS_WAITING) {
+    case CMD_EMPTY: {
+      if (current_client != NULL &&
+          current_client->status == CLIENT_STATUS_WAITING) {
         send_cmd(state->server_socket,
                  CMD_NAME,
                  (Socket_Address*)&current_client->address,
@@ -193,20 +173,24 @@ network_accept_players(Network_State* state) {
         current_client->status = CLIENT_STATUS_CONNECTED;
         state->connected_players++;
       }
-      continue;
+      break;
     }
     case CMD_CONNECT: {
+      if (current_client == NULL ||
+          !same_address(&current_client->address, &client_address)) {
 
-      if (current_client->status != CLIENT_STATUS_DISCONNECTED)
-        continue;
-      else {
         send_cmd(state->server_socket,
                  CMD_WAIT,
-                 (Socket_Address*)&current_client->address,
-                 current_client->address_size);
+                 (Socket_Address*)&client_address,
+                 client_address_size);
+
+        current_client = &state->clients[state->connected_players];
+        current_client->id = state->connected_players;
+        current_client->address = client_address;
+        current_client->address_size = client_address_size;
         current_client->status = CLIENT_STATUS_WAITING;
       }
-      continue;
+      break;
     }
     }
   }
@@ -290,12 +274,11 @@ network_send_game_over_message(Network_State* state, Game_Client* client) {
 
 bool
 network_receive_game_over_message(Network_State* state) {
+  set_recvfrom_timeout(state->client_socket, 0, 10);
   u32 cmd = read_cmd(state->client_socket, NULL, NULL);
-
-  if (cmd == CMD_GAMEOVER) {
-    return true;
-  }
-  return false;
+  bool result = (cmd == CMD_GAMEOVER);
+  set_recvfrom_timeout(state->client_socket, 1, 0);
+  return result;
 }
 
 void

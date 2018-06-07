@@ -2,6 +2,7 @@
 #include "memory.c"
 #include "bitmap.c"
 #include "world.c"
+#include "time.h"
 
 // note: pixels/second
 #define MOVE_SPEED 10.0f
@@ -10,6 +11,7 @@
 #define AWAITING_STAGE 0
 #define PLAYING_STAGE 1
 #define RETRY_STAGE 2
+#define GAME_OVER_STAGE 3
 
 internal void
 handle_input(Server_State* state, Player* player, i32 key) {
@@ -136,7 +138,18 @@ server_run(Server_State* state) {
     } else {
       for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
         Game_Client client = network->clients[i];
+
+        f64 start = time_now_seconds();
         i32 key = network_receive_input(state->network, &client);
+        f64 end = time_now_seconds();
+
+        if (end - start > 0.5) {
+          network_send_game_over_message(
+              network, &network->clients[(i + 1) % MAX_PLAYER_COUNT]);
+          change_stage(state, RETRY_STAGE);
+          return;
+        }
+
         handle_input(state, &world->players[i], key);
       }
 
@@ -152,6 +165,7 @@ server_run(Server_State* state) {
     for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
       Game_Client* client = &network->clients[i];
       client->id = -1;
+      __bzero(client->name, MAX_PLAYER_NAME_LENGTH);
       client->address.sin_addr.s_addr = 0;
       client->address.sin_port = 0;
       client->status = CLIENT_STATUS_DISCONNECTED;

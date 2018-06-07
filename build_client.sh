@@ -38,10 +38,8 @@ gcc $compiler_flags -o $bin_dir/lib_client.so $src_dir/game/client.c -shared -fP
 -L$lib_dir -L$bin_dir \
 -l:lib_ui.so -l:lib_input.so -l:lib_rendering.so -l:lib_network.so
 
-rm -f distributed_pong
-gcc $compiler_flags -o pong_client $src_dir/linux/pong_client.c -lm -ldl \
+rm -f pong
+gcc $compiler_flags -o pong $src_dir/linux/pong_client.c -lm -ldl \
 -I$inc_dir \
 -L$lib_dir -L$bin_dir \
 -l:lib_window.so -l:lib_client.so
-
-#./pong_client

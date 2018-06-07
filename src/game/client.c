@@ -4,12 +4,14 @@
 #include "world.c"
 
 #include <strings.h>
+#include "time.h"
 
 #define START_STAGE 0
 #define SEARCHING_SERVER_STAGE 1
 #define AWAITING_STAGE 2
 #define PLAYING_STAGE 3
 #define RETRY_STAGE 4
+#define GAME_OVER_STAGE 5
 
 void
 stage0_play(Client_State* state,
@@ -210,7 +212,18 @@ client_run(Client_State* state) {
   case PLAYING_STAGE: {
     window_input(state->window);
     input_update(state->input);
+
+    f64 start = time_now_seconds();
     network_receive_data(state->network);
+    f64 end = time_now_seconds();
+
+    if (end - start > 0.5) {
+      if (network_receive_game_over_message(network))
+
+        state->stage = GAME_OVER_STAGE;
+      break;
+    }
+
     client_update(state);
     window_update(state->window);
     window_render(state->window);
@@ -223,6 +236,15 @@ client_run(Client_State* state) {
     window_input(state->window);
     window_render(state->window);
     ui_render_retry_screen(state->ui, state->match_result ? "won" : "lost");
+    window_swapbuffers(state->window);
+
+    state->running &= !window->should_close;
+    break;
+  }
+  case GAME_OVER_STAGE: {
+    window_input(state->window);
+    window_render(state->window);
+    ui_render_game_over_screen(state->ui);
     window_swapbuffers(state->window);
 
     state->running &= !window->should_close;

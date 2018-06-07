@@ -13,10 +13,11 @@ typedef struct sockaddr Socket_Address;
 typedef struct sockaddr_in Socket_Address_In;
 
 #define CMD_SIZE sizeof(u32)
-#define CMD_CONNECT 1
-#define CMD_WAIT 2
-#define CMD_NAME 3
-#define CMD_READY 4
+#define CMD_EMPTY 0
+#define CMD_CONNECT 19
+#define CMD_WAIT 31
+#define CMD_NAME 17
+#define CMD_READY 11
 #define CMD_GAMEOVER 5
 
 #define CLIENT_STATUS_DISCONNECTED 0
