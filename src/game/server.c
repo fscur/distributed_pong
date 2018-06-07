@@ -30,18 +30,6 @@ handle_input(Server_State* state, Player* player, i32 key) {
       player->y += player->velocity;
     }
     break;
-    // case PLAYER2_UP:
-    //   if (world->player_2.y < world->height - world->player_height) {
-    //     world->player_2.velocity = MOVE_SPEED;
-    //     world->player_2.y += world->player_2.velocity;
-    //   }
-    //   break;
-    // case PLAYER2_DOWN:
-    //   if (world->player_2.y > 0) {
-    //     world->player_2.velocity = -MOVE_SPEED;
-    //     world->player_2.y += world->player_2.velocity;
-    //   }
-    break;
   }
 }
 
@@ -90,15 +78,15 @@ server_create(Memory* memory) {
   state->stage = UNINITIALIZED_STAGE;
 
   World* world = (World*)state->world;
-  world->width = 1280;
-  world->height = 720;
+  world->width = WINDOW_WIDTH;
+  world->height = WINDOW_HEIGHT;
   world->on_goal = on_goal;
 
   Network_State* network = state->network;
   network->world = state->world;
   network->connected_players = 0;
-  sprintf(network->connection.server_ip, "127.0.0.1");
-  network->connection.server_port = 60001;
+  sprintf(network->connection.server_ip, LOCALHOST);
+  network->connection.server_port = SERVER_PORT;
 
   return state;
 }
@@ -182,6 +170,6 @@ server_run(Server_State* state) {
 
 void
 server_destroy(const Server_State* state) {
-  // Network_State* network = state->network;
+  //Network_State* network = state->network;
   // todo: close sockets
 }

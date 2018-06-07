@@ -8,7 +8,7 @@ u32
 load_shader(const char* file_name, u32 type) {
 
   size_t file_size = io_get_file_size(file_name);
-  // todo: allocate with memory_arena
+  // todo: remove this allocation
   char* code = malloc(file_size + 1);
   memset(code, '\0', file_size + 1);
 
@@ -18,14 +18,11 @@ load_shader(const char* file_name, u32 type) {
   GLint result = GL_FALSE;
   GLuint id = glCreateShader(type);
 
-// Compile Vertex Shader
-// printf("Compiling shader : %s\n", file_name);
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
   glShaderSource(id, 1, &code, NULL);
 #pragma GCC diagnostic pop
   glCompileShader(id);
 
-  // Check Vertex Shader
   glGetShaderiv(id, GL_COMPILE_STATUS, &result);
   glGetShaderiv(id, GL_INFO_LOG_LENGTH, &info_log_length);
 
@@ -42,8 +39,6 @@ load_shader(const char* file_name, u32 type) {
 
 void
 load_program(Shader_Program* program) {
-  // Link the program
-  // printf("Linking program\n");
   GLuint id = glCreateProgram();
   glAttachShader(id, program->vertex_shader_id);
   glAttachShader(id, program->fragment_shader_id);
@@ -51,7 +46,6 @@ load_program(Shader_Program* program) {
 
   GLint result = GL_FALSE;
   int info_log_length = 0;
-  // Check the program
   glGetProgramiv(id, GL_LINK_STATUS, &result);
   glGetProgramiv(id, GL_INFO_LOG_LENGTH, &info_log_length);
 
@@ -129,12 +123,10 @@ rendering_init(Render_State* state) {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-#include "../game/world.h"
-
 void
 rendering_render(Render_State* state) {
   glClearColor(0.0, 0.0, 0.0, 1.0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
   glBindVertexArray(state->vao_id);
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, state->vertex_buffer_id);
@@ -143,18 +135,10 @@ rendering_render(Render_State* state) {
   glUseProgram(state->program.id);
   glBindBuffer(GL_UNIFORM_BUFFER, state->uniform_buffer_id);
 
-  // World* world = (World*)state->uniform_buffer_data;
-
   glBufferData(GL_UNIFORM_BUFFER,
                state->uniform_buffer_data_size,
                state->uniform_buffer_data,
                GL_DYNAMIC_DRAW);
-
-  // GLvoid* p = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-
-  // World* world = (World*)state->uniform_buffer_data;
-  // memcpy(p, &state->uniform_buffer_data, state->uniform_buffer_data_size);
-  // glUnmapBuffer(GL_UNIFORM_BUFFER);
 
   glDrawArrays(GL_TRIANGLES, 0, 6);
   glUseProgram(0);

@@ -8,6 +8,13 @@ typedef struct ImGuiIO ImGuiIO;
 
 #define UI_BUTTON_WIDTH 100
 #define UI_BUTTON_HEIGHT 33
+#define UI_HIGHLIGHT_COLOR                                                     \
+  (ImVec4) { 0.95, 0.7, 0.2, 1.0 }
+#define UI_FIXED_WINDOW                                                        \
+  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |                    \
+      ImGuiWindowFlags_NoMove
+
+#define UI_TEXT_BOX_WIDTH 210
 
 internal void
 update_gl_texture(u32 texID, Bitmap* image) {
@@ -90,8 +97,7 @@ set_style(struct ImGuiStyle* style, Ui* ui) {
       (ImVec4){1.00f, 0.98f, 0.95f, 0.73f};
 
   struct ImGuiIO* io = igGetIO();
-  // ImFontAtlas_AddFontFromFileTTF(io->Fonts,
-  // "../res/fonts/PressStart2P-Regular.ttf", 15.0f, 0, 0);
+
   ImFontAtlas_AddFontFromFileTTF(
       io->Fonts, "../res/fonts/Ruda-Bold.ttf", 20.0f, 0, 0);
 }
@@ -104,30 +110,8 @@ init_imgui(Ui* ui) {
   set_style(style, ui);
 }
 
-internal u32
-create_texture(Bitmap* image) {
-  GLuint texture_id;
-  glGenTextures(1, &texture_id);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexImage2D(GL_TEXTURE_2D,
-               0,
-               GL_RGBA,
-               image->width,
-               image->height,
-               0,
-               GL_BGRA,
-               GL_UNSIGNED_BYTE,
-               image->data);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  return texture_id;
-}
-
 void
-ui_init(Ui* ui) {}
-
-void
-ui_load(Ui* ui) {
+ui_init(Ui* ui) {
   init_imgui(ui);
 }
 
@@ -136,28 +120,25 @@ ui_render_start_screen(Ui* ui) {
   ImGui_ImplGlfwGL3_NewFrame();
 
   bool open = true;
-  igBegin("start_screen",
-          &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-              ImGuiWindowFlags_NoMove);
+  igBegin("start_screen", &open, UI_FIXED_WINDOW);
 
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
   igText("Enter the server ip:");
   igPopStyleColor(1);
 
-  static char server_ip[SERVER_IP_LENGTH] = "127.0.0.1";
-  igPushItemWidth(210);
+  static char server_ip[SERVER_IP_LENGTH] = LOCALHOST;
+  igPushItemWidth(UI_TEXT_BOX_WIDTH);
   igPushIDInt(0);
   igInputText("", server_ip, SERVER_IP_LENGTH, 0, NULL, NULL);
   igPopID();
   igPopItemWidth(1);
 
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
   igText("Enter your name:");
   igPopStyleColor(1);
 
   static char name[MAX_PLAYER_NAME_LENGTH] = {};
-  igPushItemWidth(210);
+  igPushItemWidth(UI_TEXT_BOX_WIDTH);
   igPushIDInt(1);
   igInputText("", name, MAX_PLAYER_NAME_LENGTH, 0, NULL, NULL);
   igPopID();
@@ -188,12 +169,9 @@ ui_render_searching_server(Ui* ui) {
   ImGui_ImplGlfwGL3_NewFrame();
 
   bool open = true;
-  igBegin("searching_server",
-          &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-              ImGuiWindowFlags_NoMove);
+  igBegin("searching_server", &open, UI_FIXED_WINDOW);
 
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
   igText("Searching server...");
   igPopStyleColor(1);
   igEnd();
@@ -206,12 +184,9 @@ ui_render_awaiting_challenger(Ui* ui) {
   ImGui_ImplGlfwGL3_NewFrame();
 
   bool open = true;
-  igBegin("awaiting",
-          &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-              ImGuiWindowFlags_NoMove);
+  igBegin("awaiting", &open, UI_FIXED_WINDOW);
 
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
   igText("Awaiting challenger...");
   igPopStyleColor(1);
   igEnd();
@@ -236,7 +211,7 @@ render_score(Ui* ui) {
   igText("%s", ui->world->players[0].name);
   igPopStyleColor(1);
   igSameLine(0, 4);
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
   igText("%d X %d", ui->world->players[0].points, ui->world->players[1].points);
   igPopStyleColor(1);
 
@@ -262,11 +237,8 @@ ui_render_retry_screen(Ui* ui, char* result) {
   ImGui_ImplGlfwGL3_NewFrame();
 
   bool open = true;
-  igBegin("retry_screen",
-          &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-              ImGuiWindowFlags_NoMove);
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
+  igBegin("retry_screen", &open, UI_FIXED_WINDOW);
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
   igText("%s, you %s!\nWant to play again?", ui->name, result);
 
   igPopStyleColor(1);
@@ -290,12 +262,9 @@ ui_render_game_over_screen(Ui* ui) {
   ImGui_ImplGlfwGL3_NewFrame();
 
   bool open = true;
-  igBegin("game_over_screen",
-          &open,
-          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-              ImGuiWindowFlags_NoMove);
-  igPushStyleColor(ImGuiCol_Text, (ImVec4){0.95, 0.7, 0.2, 1.0});
-  igText("%s, your adversary quit!\nWant to play again?", ui->name);
+  igBegin("game_over_screen", &open, UI_FIXED_WINDOW);
+  igPushStyleColor(ImGuiCol_Text, UI_HIGHLIGHT_COLOR);
+  igText("%s, your opponent quit!\nWant to play again?", ui->name);
 
   igPopStyleColor(1);
 

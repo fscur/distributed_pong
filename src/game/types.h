@@ -54,3 +54,7 @@ typedef struct Color {
 #define MAX_PLAYER_COUNT 2
 #define MAX_PLAYER_NAME_LENGTH 32
 #define SERVER_IP_LENGTH 15
+#define LOCALHOST "127.0.0.1"
+#define SERVER_PORT 60001
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720

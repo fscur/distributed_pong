@@ -61,8 +61,8 @@ client_create_state(Memory* memory) {
 
   Game_Window* window = state->window;
   window->title = "pong";
-  window->width = 1280;
-  window->height = 720;
+  window->width = WINDOW_WIDTH;
+  window->height = WINDOW_HEIGHT;
   window->back_color = color;
   window->on_close = client_on_close;
 
@@ -79,16 +79,14 @@ client_create_state(Memory* memory) {
 
   Network_State* network = state->network;
   network->world = state->world;
-  sprintf(network->connection.server_ip, "127.0.0.1");
-  network->connection.server_port = 60001;
+  sprintf(network->connection.server_ip, LOCALHOST);
+  network->connection.server_port = SERVER_PORT;
 
   return state;
 }
 
 void
 client_init(Client_State* state) {
-  ui_init(state->ui);
-
   Game_Window* window = (Game_Window*)state->window;
 
   World* world = (World*)state->world;
@@ -103,7 +101,7 @@ client_init(Client_State* state) {
   Network_State* network = (Network_State*)state->network;
   network_init_client(network);
 
-  ui_load(state->ui);
+  ui_init(state->ui);
 }
 
 void

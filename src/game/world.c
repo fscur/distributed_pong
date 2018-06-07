@@ -16,8 +16,6 @@ world_reset(World* world) {
   f32 ball_velocity_x = (0.5 + ((f32)rand() / (f32)RAND_MAX) * 0.5) * flip;
   f32 ball_velocity_y = (((f32)rand() / (f32)RAND_MAX) * 0.5) * 2.0 - 0.5;
 
-  printf("%f - %f - %f\n", ball_velocity_x, ball_velocity_y, flip);
-
   world->ball.radius = 10;
   world->ball.pos = (v2){(f32)world->width / 2, (f32)world->height / 2};
   world->ball.velocity =
