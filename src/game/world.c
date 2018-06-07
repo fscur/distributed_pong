@@ -6,22 +6,17 @@
 
 void
 world_reset(World* world) {
-  world->player_width = 20;
-  world->player_height = 80;
-
   world->players[0].velocity = 0;
   world->players[1].velocity = 0;
   world->players[0].colliding = false;
   world->players[1].colliding = false;
 
   // note: limit x,y direction, so we do not start too steep
+  f32 flip = (f32)(rand() % 2) * 2.0 - 1.0;
+  f32 ball_velocity_x = (0.5 + ((f32)rand() / (f32)RAND_MAX) * 0.5) * flip;
+  f32 ball_velocity_y = (((f32)rand() / (f32)RAND_MAX) * 0.5) * 2.0 - 0.5;
 
-  f32 ball_velocity_x =
-      1.0 -
-      max(min((((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f), 0.2f), -0.2);
-
-  f32 ball_velocity_y =
-      max(min((((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f), 0.3f), -0.3);
+  printf("%f - %f - %f\n", ball_velocity_x, ball_velocity_y, flip);
 
   world->ball.radius = 10;
   world->ball.pos = (v2){(f32)world->width / 2, (f32)world->height / 2};
@@ -31,15 +26,14 @@ world_reset(World* world) {
 
 void
 world_init(World* world) {
-  srand(time(0));
-  f32 players_y = (f32)world->height * 0.5f - (f32)world->player_width * 0.5f;
 
+  f32 players_y = (f32)world->height * 0.5f - (f32)world->player_height * 0.5f;
+  world->player_width = 20;
+  world->player_height = 80;
   world->players[0].points = 0;
   world->players[1].points = 0;
   world->players[0].y = players_y;
   world->players[1].y = players_y;
-
-  world_reset(world);
 }
 
 bool

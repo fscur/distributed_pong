@@ -31,6 +31,7 @@ allocate_memory() {
 
 int
 main(int argc, char** args) {
+  
   Memory memory = allocate_memory();
   Client_State* state = client_create_state(&memory);
 

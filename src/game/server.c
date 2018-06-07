@@ -118,6 +118,7 @@ server_run(Server_State* state) {
   case AWAITING_STAGE: {
     if (network_accept_players(state->network)) {
       world_init(state->world);
+      world_reset(state->world);
       change_stage(state, PLAYING_STAGE);
       memcpy(world->players[0].name,
              network->clients[0].name,

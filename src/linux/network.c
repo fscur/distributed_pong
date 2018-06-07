@@ -13,50 +13,6 @@
 #include "../game/world.h"
 
 void
-serialize(Game_Packet* packet, i8* data) {
-  f32* f = (f32*)data;
-  *f = packet->ball_pos.x;
-  f++;
-  *f = packet->ball_pos.y;
-  f++;
-  *f = packet->ball_radius;
-  f++;
-
-  for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
-    *f = packet->players_positions[i];
-    f++;
-  }
-
-  i8* b = (i8*)f;
-  for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
-    *b = packet->players_points[i];
-    b++;
-  }
-}
-
-void
-deserialize(i8* data, Game_Packet* packet) {
-  f32* f = (f32*)data;
-  packet->ball_pos.x = *f;
-  f++;
-  packet->ball_pos.y = *f;
-  f++;
-  packet->ball_radius = *f;
-  f++;
-
-  for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
-    packet->players_positions[i] = *f;
-    f++;
-  }
-
-  i8* p = (i8*)f;
-  for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
-    packet->players_points[i] = *p;
-    p++;
-  }
-}
-
-void
 network_init(Network_State* state) {}
 
 void
@@ -122,7 +78,7 @@ network_clear_input_buffer(i32 socket) {
 }
 
 bool
-same_address(Socket_Address_In* a, Socket_Address_In* b) {
+is_same_address(Socket_Address_In* a, Socket_Address_In* b) {
   return a->sin_addr.s_addr == b->sin_addr.s_addr && a->sin_port == b->sin_port;
 }
 
@@ -177,7 +133,7 @@ network_accept_players(Network_State* state) {
     }
     case CMD_CONNECT: {
       if (current_client == NULL ||
-          !same_address(&current_client->address, &client_address)) {
+          !is_same_address(&current_client->address, &client_address)) {
 
         send_cmd(state->server_socket,
                  CMD_WAIT,
@@ -336,6 +292,7 @@ network_broadcast(Network_State* state) {
     packet.ball_radius = world->ball.radius;
     packet.ball_pos = world->ball.pos;
 
+    // important: THIS IS WRONG! we should serialize the packet
     sendto(state->server_socket,
            &packet,
            sizeof(Game_Packet),

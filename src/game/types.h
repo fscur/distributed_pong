@@ -52,5 +52,5 @@ typedef struct Color {
 } Color;
 
 #define MAX_PLAYER_COUNT 2
-#define MAX_PLAYER_NAME_LENGTH 10
+#define MAX_PLAYER_NAME_LENGTH 32
 #define SERVER_IP_LENGTH 15

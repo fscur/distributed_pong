@@ -33,6 +33,7 @@ allocate_memory() {
 
 int
 main(int argc, char** args) {
+  srand(time(0));
   Memory memory = allocate_memory();
   Server_State* state = server_create(&memory);
 

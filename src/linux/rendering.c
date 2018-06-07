@@ -18,8 +18,8 @@ load_shader(const char* file_name, u32 type) {
   GLint result = GL_FALSE;
   GLuint id = glCreateShader(type);
 
-  // Compile Vertex Shader
-  printf("Compiling shader : %s\n", file_name);
+// Compile Vertex Shader
+// printf("Compiling shader : %s\n", file_name);
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
   glShaderSource(id, 1, &code, NULL);
 #pragma GCC diagnostic pop
@@ -43,7 +43,7 @@ load_shader(const char* file_name, u32 type) {
 void
 load_program(Shader_Program* program) {
   // Link the program
-  printf("Linking program\n");
+  // printf("Linking program\n");
   GLuint id = glCreateProgram();
   glAttachShader(id, program->vertex_shader_id);
   glAttachShader(id, program->fragment_shader_id);

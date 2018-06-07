@@ -1,22 +1,5 @@
 #version 330 core
 
-struct World {
-  ivec2 res;
-  ivec2 player_size;
-  float time;
-  float dt;
-};
-
-struct Player {
-  float y;
-};
-
-struct Ball {
-  vec2 position;
-  float radius;
-  float pad1;
-};
-
 layout(std140) uniform Game {
   vec2 res;
   vec2 player_size;
@@ -82,7 +65,6 @@ main() {
   vec2 frag_pos = gl_FragCoord.xy / res;
   frag_pos.x *= aspect;
   frag_pos *= res.y;
-  // frag_color = vec4(sin(world.time), sin(world.time), 1.0, 1.0);
 
   float half_width = res.x * 0.5;
   float half_height = res.y * 0.5;
@@ -94,7 +76,7 @@ main() {
   float b = sphere(frag_pos, ball_position, ball_radius);
   float l = dotted_vertical_line(frag_pos, half_width, 2.0);
 
-  vec4 ball_color = vec4(0, b, 0, b);
+  vec4 ball_color = vec4(0.95, 0.7, 0.2, 1.0) * b;
 
   vec4 world = vec4(0.07, 0.07, 0.09, 1.00);
   world = over(vec4(l), world);

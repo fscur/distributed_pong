@@ -19,19 +19,3 @@ time_now_seconds() {
   clock_gettime(CLOCK_MONOTONIC_RAW, &now);
   return now.tv_sec + now.tv_nsec / 1000000000.0;
 }
-
-long
-milliseconds_elapsed(Timespan start, Timespan end) {
-  return (long)(1000.0 * (end.time - start.time) +
-                (end.millitm - start.millitm));
-}
-
-void
-spin(u32 milliseconds) {
-  Timespan start, end;
-  ftime(&start);
-  ftime(&end);
-  while (milliseconds_elapsed(start, end) < milliseconds) {
-    ftime(&end);
-  }
-}

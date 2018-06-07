@@ -6,10 +6,8 @@ input_update(Input* input) {
   GLFWwindow* window = (GLFWwindow*)input->window->handle;
   void* state = glfwGetWindowUserPointer(window);
 
-  i32 player_up = glfwGetKey(window, GLFW_KEY_W);
-  i32 player_down = glfwGetKey(window, GLFW_KEY_S);
-
-  // input->key_press(state, PLAYER_UP);
+  i32 player_up = glfwGetKey(window, GLFW_KEY_UP);
+  i32 player_down = glfwGetKey(window, GLFW_KEY_DOWN);
 
   if (player_up == GLFW_PRESS)
     input->key_press(state, PLAYER_UP);

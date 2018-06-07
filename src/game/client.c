@@ -1,10 +1,10 @@
 #include "client.h"
 #include "memory.c"
 #include "bitmap.c"
-#include "world.c"
 
 #include <strings.h>
 #include "time.h"
+#include "world.c"
 
 #define START_STAGE 0
 #define SEARCHING_SERVER_STAGE 1
@@ -29,7 +29,6 @@ stage0_play(Client_State* state,
 void
 client_on_close(Client_State* state) {
   state->running = false;
-  // todo: send disconnected.
 }
 
 internal void
@@ -95,7 +94,6 @@ client_init(Client_State* state) {
   World* world = (World*)state->world;
   world->height = window->height;
   world->width = window->width;
-  world_init(world);
 
   Render_State* render = (Render_State*)state->rendering;
   render->uniform_buffer_data = state->world_rendering_data;
@@ -184,7 +182,6 @@ client_run(Client_State* state) {
     window_swapbuffers(state->window);
 
     if (network_connect_to_server(state->network, state->name, &state->id)) {
-      printf("%d\n", state->id);
       state->stage = AWAITING_STAGE;
     }
 
