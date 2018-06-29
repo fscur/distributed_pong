@@ -27,7 +27,7 @@
             "name": "(gdb) Server",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/pong_server",
+            "program": "${workspaceFolder}/bin/pongd",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/bin",
@@ -46,7 +46,7 @@
             "name": "(gdb) Client",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/pong_client",
+            "program": "${workspaceFolder}/bin/pong",
             "args": [
                 "127.0.0.1",
                 "60001"

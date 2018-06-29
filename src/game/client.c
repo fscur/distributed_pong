@@ -212,7 +212,7 @@ client_run(Client_State* state) {
     network_receive_data(state->network);
     f64 end = time_now_seconds();
 
-    if (end - start > 0.5) {
+    if (end - start > TIMEOUT) {
       if (network_receive_game_over_message(network))
 
         state->stage = GAME_OVER_STAGE;

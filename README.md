@@ -40,4 +40,4 @@ cd distributed_pong
 
 ## Known Issues
 
-* Closing while awaiting a challenger does not notify server of disconnection, and server has to be restarted.
+* Closing while awaiting a challenger does not notify server of disconnection, and server has to from a use o be restarted.

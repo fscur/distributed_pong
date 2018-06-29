@@ -86,6 +86,7 @@ bool
 network_accept_players(Network_State* state) {
 
   Game_Client* current_client = NULL;
+  int waiting_players = 0;
 
   while (state->connected_players < MAX_PLAYER_COUNT) {
 
@@ -94,15 +95,41 @@ network_accept_players(Network_State* state) {
 
     set_recvfrom_timeout(state->server_socket, 0, 10);
 
+    while (waiting_players < MAX_PLAYER_COUNT) {
+
     u32 cmd = read_cmd(state->server_socket,
                        (Socket_Address*)&client_address,
                        &client_address_size);
 
-    switch (cmd) {
-    case CMD_EMPTY: {
-      if (current_client != NULL &&
-          current_client->status == CLIENT_STATUS_WAITING) {
-        send_cmd(state->server_socket,
+      switch (cmd) {
+
+      case CMD_CONNECT: {
+        if (current_client == NULL ||
+            !is_same_address(&current_client->address, &client_address)) {
+
+          send_cmd(state->server_socket,
+                   CMD_WAIT,
+                   (Socket_Address*)&client_address,
+                   client_address_size);
+
+          state->clients[waiting_players].id = waiting_players;
+          state->clients[waiting_players].address = client_address;
+          state->clients[waiting_players].address_size = client_address_size;
+          state->clients[waiting_players].status = CLIENT_STATUS_WAITING;
+          current_client = &state->clients[waiting_players];
+          waiting_players++;
+        }
+        break;
+      }
+      }
+    }
+
+    network_clear_input_buffer(state->server_socket);
+
+    for (i32 i = 0; i < MAX_PLAYER_COUNT; ++i) {
+      current_client = &state->clients[i];
+      
+      send_cmd(state->server_socket,
                  CMD_NAME,
                  (Socket_Address*)&current_client->address,
                  current_client->address_size);
@@ -128,29 +155,11 @@ network_accept_players(Network_State* state) {
 
         current_client->status = CLIENT_STATUS_CONNECTED;
         state->connected_players++;
-      }
-      break;
-    }
-    case CMD_CONNECT: {
-      if (current_client == NULL ||
-          !is_same_address(&current_client->address, &client_address)) {
-
-        send_cmd(state->server_socket,
-                 CMD_WAIT,
-                 (Socket_Address*)&client_address,
-                 client_address_size);
-
-        current_client = &state->clients[state->connected_players];
-        current_client->id = state->connected_players;
-        current_client->address = client_address;
-        current_client->address_size = client_address_size;
-        current_client->status = CLIENT_STATUS_WAITING;
-      }
-      break;
-    }
     }
   }
+
   set_recvfrom_timeout(state->server_socket, 1, 0);
+
   return true;
 }
 
